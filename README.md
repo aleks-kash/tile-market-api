@@ -14,6 +14,8 @@ make build
 make up
 ```
 
+Manticore exposes HTTP API on port `9308` and MySQL-compatible protocol on `9306` (for SQL-like client access).
+
 ## API endpoints
 - `GET /api/v1/price?factory=&collection=&article=`
 - `GET /api/v1/orders/stats?page=1&limit=20&group_by=day`

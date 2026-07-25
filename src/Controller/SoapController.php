@@ -32,9 +32,9 @@ final class SoapController
         $factory = $this->extractNodeValue($document, 'factory');
         $collection = $this->extractNodeValue($document, 'collection');
         $article = $this->extractNodeValue($document, 'article');
-        $price = $this->extractNodeValue($document, 'price') ?? '0.00';
+        $price = $this->extractNodeValue($document, 'price');
 
-        if ($factory === null || $collection === null || $article === null) {
+        if ($factory === null || $collection === null || $article === null || $price === null) {
             return $this->faultResponse('Missing required order fields', 422);
         }
 
@@ -42,7 +42,7 @@ final class SoapController
             ->setFactory($factory)
             ->setCollection($collection)
             ->setArticle($article)
-            ->setPrice((string) $price)
+            ->setPrice($price)
             ->setPayload($xml);
 
         $this->entityManager->persist($order);

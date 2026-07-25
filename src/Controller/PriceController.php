@@ -67,10 +67,32 @@ final class PriceController
 
         foreach ($patterns as $pattern) {
             if (preg_match($pattern, $html, $matches) === 1) {
-                return (float) str_replace(',', '.', $matches[1]);
+                return $this->normalizeNumber($matches[1]);
             }
         }
 
         return null;
+    }
+
+    private function normalizeNumber(string $value): float
+    {
+        $normalized = str_replace(' ', '', trim($value));
+
+        if (str_contains($normalized, ',') && str_contains($normalized, '.')) {
+            $lastComma = strrpos($normalized, ',');
+            $lastDot = strrpos($normalized, '.');
+            $decimalSeparator = $lastComma > $lastDot ? ',' : '.';
+
+            if ($decimalSeparator === ',') {
+                $normalized = str_replace('.', '', $normalized);
+                $normalized = str_replace(',', '.', $normalized);
+            } else {
+                $normalized = str_replace(',', '', $normalized);
+            }
+        } else {
+            $normalized = str_replace(',', '.', $normalized);
+        }
+
+        return (float) $normalized;
     }
 }
