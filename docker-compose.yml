@@ -42,7 +42,7 @@ services:
       - "${MANTICORE_HTTP_PORT:-9308}:9308"
       - "${MANTICORE_SPHINX_PORT:-9306}:9306"
     volumes:
-      - ./docker/manticore/manticore.conf:/etc/manticoresearch/manticore.conf:ro
+      - ./docker/manticore/manticore.conf:/etc/manticoresearch/manticore.conf
       - manticore_data:/var/lib/manticore
     depends_on:
       - postgres
