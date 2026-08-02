@@ -54,16 +54,16 @@ class OrderRepository extends ServiceEntityRepository
     {
         $groupingQueries = [
             'day' => [
-                'items' => "SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS period, COUNT(*)::int AS orders_count FROM orders GROUP BY 1 ORDER BY period DESC LIMIT :limit OFFSET :offset",
-                'total' => "SELECT COUNT(*) FROM (SELECT date_trunc('day', created_at) AS p FROM orders GROUP BY p) t",
+                'items' => "SELECT to_char(date_trunc('day', create_date), 'YYYY-MM-DD') AS period, COUNT(*)::int AS orders_count FROM orders GROUP BY 1 ORDER BY period DESC LIMIT :limit OFFSET :offset",
+                'total' => "SELECT COUNT(*) FROM (SELECT date_trunc('day', create_date) AS p FROM orders GROUP BY p) t",
             ],
             'month' => [
-                'items' => "SELECT to_char(date_trunc('month', created_at), 'YYYY-MM') AS period, COUNT(*)::int AS orders_count FROM orders GROUP BY 1 ORDER BY period DESC LIMIT :limit OFFSET :offset",
-                'total' => "SELECT COUNT(*) FROM (SELECT date_trunc('month', created_at) AS p FROM orders GROUP BY p) t",
+                'items' => "SELECT to_char(date_trunc('month', create_date), 'YYYY-MM') AS period, COUNT(*)::int AS orders_count FROM orders GROUP BY 1 ORDER BY period DESC LIMIT :limit OFFSET :offset",
+                'total' => "SELECT COUNT(*) FROM (SELECT date_trunc('month', create_date) AS p FROM orders GROUP BY p) t",
             ],
             'year' => [
-                'items' => "SELECT to_char(date_trunc('year', created_at), 'YYYY') AS period, COUNT(*)::int AS orders_count FROM orders GROUP BY 1 ORDER BY period DESC LIMIT :limit OFFSET :offset",
-                'total' => "SELECT COUNT(*) FROM (SELECT date_trunc('year', created_at) AS p FROM orders GROUP BY p) t",
+                'items' => "SELECT to_char(date_trunc('year', create_date), 'YYYY') AS period, COUNT(*)::int AS orders_count FROM orders GROUP BY 1 ORDER BY period DESC LIMIT :limit OFFSET :offset",
+                'total' => "SELECT COUNT(*) FROM (SELECT date_trunc('year', create_date) AS p FROM orders GROUP BY p) t",
             ],
         ];
 
