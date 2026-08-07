@@ -15,11 +15,16 @@
     "symfony/flex": "^2",
     "symfony/framework-bundle": "7.4.*",
     "symfony/http-client": "7.4.*",
+    "symfony/property-access": "7.4.*",
+    "symfony/property-info": "7.4.*",
     "symfony/runtime": "7.4.*",
     "symfony/serializer": "7.4.*",
+    "symfony/validator": "7.4.*",
     "symfony/yaml": "7.4.*"
   },
   "require-dev": {
+    "symfony/browser-kit": "7.4.*",
+    "symfony/css-selector": "7.4.*",
     "symfony/maker-bundle": "^1.61",
     "symfony/phpunit-bridge": "7.4.*"
   },

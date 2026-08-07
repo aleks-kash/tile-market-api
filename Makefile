@@ -8,4 +8,4 @@ down:
 	docker compose down
 
 test:
-	docker compose run --rm php-fpm php bin/phpunit
+	docker compose run --rm php-fpm vendor/bin/simple-phpunit
