@@ -1,3 +1,8 @@
+api_price:
+  path: /api/v1/price
+  controller: App\Controller\PriceController::run
+  methods: [GET]
+
 controllers:
   resource:
     path: ../src/Controller/

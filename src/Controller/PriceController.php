@@ -2,97 +2,76 @@
 
 namespace App\Controller;
 
+use App\Service\PriceExtractor;
+use App\Dto\PriceRequestDto;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
+/**
+ * Controller to extract pricing information for specific tile articles from a remote resource.
+ */
 final class PriceController
 {
+    /**
+     * PriceController constructor.
+     *
+     * @param HttpClientInterface $httpClient The HTTP client used to fetch pages from the source site.
+     */
     public function __construct(private readonly HttpClientInterface $httpClient)
     {
     }
 
-    #[Route('/api/v1/price', name: 'api_price', methods: ['GET'])]
-    public function __invoke(Request $request): JsonResponse
+    /**
+     * Retrieve the price of a specific tile collection article.
+     * @param PriceRequestDto $query The query parameters.
+     * @return JsonResponse A JSON response containing the extracted price, or an error message.
+     */
+    public function run(
+        #[MapQueryString(validationFailedStatusCode: 400)] PriceRequestDto $query
+    ): JsonResponse
     {
-        $factory = (string) $request->query->get('factory', '');
-        $collection = (string) $request->query->get('collection', '');
-        $article = (string) $request->query->get('article', '');
-
-        if ($factory === '' || $collection === '' || $article === '') {
-            return new JsonResponse(['error' => 'factory, collection and article are required'], 400);
-        }
-
+        // Build the target URL for scraping.
         $url = sprintf(
             'https://tile.expert/it/tile/%s/%s/a/%s',
-            rawurlencode($factory),
-            rawurlencode($collection),
-            rawurlencode($article)
+            rawurlencode($query->factory),
+            rawurlencode($query->collection),
+            rawurlencode($query->article)
         );
 
+        // Fetch the remote HTML page.
         try {
             $response = $this->httpClient->request('GET', $url);
         } catch (TransportExceptionInterface) {
-            return new JsonResponse(['error' => 'Source page is unavailable'], 502);
+            throw new HttpException(502, 'Source page is unavailable');
         }
 
+        // Return a gateway error if the source site returns an error status code.
         if ($response->getStatusCode() >= 400) {
-            return new JsonResponse(['error' => 'Failed to load source page'], 502);
+            throw new HttpException(502, 'Failed to load source page');
         }
 
         $html = $response->getContent(false);
-        $price = $this->extractPrice($html);
 
-        if ($price === null) {
-            return new JsonResponse(['error' => 'Price not found'], 422);
+        // First try: Extract using DOM XPath.
+        if (!$price = PriceExtractor::extractFromDom($html)) {
+            // Second try: Fallback to Regex pattern matching.
+            $price = PriceExtractor::extractFromRegex($html);
+        }
+
+        // If the price could not be extracted from the HTML content.
+        if (!$price) {
+            throw new UnprocessableEntityHttpException('Price not found');
         }
 
         return new JsonResponse([
             'price' => $price,
-            'factory' => $factory,
-            'collection' => $collection,
-            'article' => $article,
+            'factory' => $query->factory,
+            'collection' => $query->collection,
+            'article' => $query->article,
         ]);
-    }
-
-    private function extractPrice(string $html): ?float
-    {
-        $patterns = [
-            '/"price"\s*:\s*"?([0-9]+(?:[.,][0-9]+)?)"?/i',
-            '/itemprop="price"[^>]*content="([0-9]+(?:[.,][0-9]+)?)"/i',
-            '/([0-9]+(?:[.,][0-9]+)?)\s*(?:€|EUR)/i',
-        ];
-
-        foreach ($patterns as $pattern) {
-            if (preg_match($pattern, $html, $matches) === 1) {
-                return $this->normalizeNumber($matches[1]);
-            }
-        }
-
-        return null;
-    }
-
-    private function normalizeNumber(string $value): float
-    {
-        $normalized = str_replace(' ', '', trim($value));
-
-        if (str_contains($normalized, ',') && str_contains($normalized, '.')) {
-            $lastComma = strrpos($normalized, ',');
-            $lastDot = strrpos($normalized, '.');
-            $decimalSeparator = $lastComma > $lastDot ? ',' : '.';
-
-            if ($decimalSeparator === ',') {
-                $normalized = str_replace('.', '', $normalized);
-                $normalized = str_replace(',', '.', $normalized);
-            } else {
-                $normalized = str_replace(',', '', $normalized);
-            }
-        } else {
-            $normalized = str_replace(',', '.', $normalized);
-        }
-
-        return (float) $normalized;
     }
 }
