@@ -5,8 +5,14 @@ namespace App\Tests\Repository;
 use App\Repository\OrderRepository;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Unit tests for the OrderRepository helper methods.
+ */
 final class OrderRepositoryTest extends TestCase
 {
+    /**
+     * Test that resolveGroupingQueries correctly maps groupings ('day', 'month', 'year') and defaults to 'day'.
+     */
     public function testResolveGroupingQueriesSupportsDayMonthYearAndFallback(): void
     {
         $repository = (new \ReflectionClass(OrderRepository::class))->newInstanceWithoutConstructor();
