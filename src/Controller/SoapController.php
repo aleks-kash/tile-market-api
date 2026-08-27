@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Order;
+use App\Entity\OrderArticle;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -38,14 +39,46 @@ final class SoapController
             return $this->faultResponse('Missing required order fields', 422);
         }
 
+        $clientName = $this->extractNodeValue($document, 'client_name') ?? 'SOAP Client';
+        $clientSurname = $this->extractNodeValue($document, 'client_surname') ?? 'SOAP';
+        $email = $this->extractNodeValue($document, 'email');
+        $amount = (float) ($this->extractNodeValue($document, 'amount') ?? 1.0);
+        $currency = $this->extractNodeValue($document, 'currency') ?? 'EUR';
+        $measure = $this->extractNodeValue($document, 'measure') ?? 'm';
+
         $order = (new Order())
-            ->setFactory($factory)
-            ->setCollection($collection)
-            ->setArticle($article)
-            ->setPrice($price)
-            ->setPayload($xml);
+            ->setName(sprintf('Order: %s - %s', $factory, $collection))
+            ->setHash(md5(uniqid('', true)))
+            ->setToken(sha1(uniqid('', true)))
+            ->setLocale('it')
+            ->setClientName($clientName)
+            ->setClientSurname($clientSurname)
+            ->setEmail($email)
+            ->setCurrency($currency)
+            ->setMeasure($measure)
+            ->setDescription(substr($xml, 0, 1000));
+
+        // Extract numeric ID from article if possible
+        $articleId = null;
+        if (preg_match_all('/\d+/', $article, $matches)) {
+            $articleId = (int) end($matches[0]);
+        }
+        if ($articleId === null || $articleId === 0) {
+            $articleId = 999;
+        }
+
+        $orderArticle = (new OrderArticle())
+            ->setArticleId($articleId)
+            ->setPrice((float) $price)
+            ->setAmount($amount)
+            ->setCurrency($currency)
+            ->setMeasure($measure)
+            ->setOrder($order);
+
+        $order->addArticle($orderArticle);
 
         $this->entityManager->persist($order);
+        $this->entityManager->persist($orderArticle);
         $this->entityManager->flush();
 
         $response = sprintf(
