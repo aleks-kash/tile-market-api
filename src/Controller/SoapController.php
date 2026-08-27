@@ -2,21 +2,17 @@
 
 namespace App\Controller;
 
-use App\Dto\SoapOrderRequestInterface;
-use App\Service\OrderProcessor;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Serializer\SerializerInterface;
-
+use App\Dto\DeliveryDataDto;
+use App\Dto\OrderItemDataDto;
+use App\Dto\UpdateOrderDataDto;
+use App\Dto\VatDataDto;
 use App\Soap\OrderSoapFacade;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Routing\Annotation\Route;
-
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-
 use Laminas\Soap\AutoDiscover;
+use Laminas\Soap\Wsdl\ComplexTypeStrategy\ArrayOfTypeSequence;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * Controller to handle SOAP requests for order creation and management.
@@ -41,35 +37,43 @@ final class SoapController extends AbstractController
         Request $request,
         string $service = 'orders'
     ): Response {
-        // Генерируем абсолютный URL текущего эндпоинта (без ?wsdl)
+        // Generate the absolute URL of the current endpoint (without ?wsdl).
         $endpointUrl = $this->generateUrl(
             'api_soap_orders',
             [],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
 
-        // 1. Если клиент запросил WSDL (GET /soap/orders?wsdl)
-        if ($request->query->has('wsdl')) {
-            $autodiscover = new AutoDiscover(new \Laminas\Soap\Wsdl\ComplexTypeStrategy\ArrayOfTypeSequence());
-            $autodiscover->setClass(get_class($this->orderFacade));
-            $autodiscover->setUri($endpointUrl);
-            $autodiscover->setServiceName(ucfirst($service) . 'Service');
+        // Generating WSDL XML.
+        $autodiscover = new AutoDiscover(new ArrayOfTypeSequence());
+        $autodiscover->setClass(get_class($this->orderFacade));
+        $autodiscover->setUri($endpointUrl);
+        $autodiscover->setServiceName(ucfirst($service) . 'Service');
 
+        $wsdlXml = $autodiscover->toXml();
+
+        // If the client requested a WSDL (GET /soap/orders?wsdl).
+        if ($request->query->has('wsdl')) {
             return new Response(
-                $autodiscover->toXml(),
+                $wsdlXml,
                 200,
                 ['Content-Type' => 'text/xml; charset=UTF-8']
             );
         }
 
-        // 2. Обрабатываем боевой SOAP-запрос (POST /soap/orders) с регистрированным classmap
-        $soapServer = new \SoapServer(null, [
-            'uri' => $endpointUrl,
+        // We pass the WSDL to SoapServer via the data:// URI without an HTTP request.
+        $wsdlDataUri = 'data://text/xml;base64,' . base64_encode($wsdlXml);
+
+        $soapServer = new \SoapServer($wsdlDataUri, [
+            'trace' => 1,
+            'exceptions' => true,
+            'cache_wsdl' => WSDL_CACHE_NONE,
+            'features' => SOAP_SINGLE_ELEMENT_ARRAYS, // <--- Гарантирует массив для списков!
             'classmap' => [
-                'UpdateOrderDataDto' => \App\Dto\UpdateOrderDataDto::class,
-                'DeliveryDataDto'    => \App\Dto\DeliveryDataDto::class,
-                'VatDataDto'         => \App\Dto\VatDataDto::class,
-                'OrderItemDataDto'   => \App\Dto\OrderItemDataDto::class,
+                'DeliveryDataDto'    => DeliveryDataDto::class,
+                'OrderItemDataDto'   => OrderItemDataDto::class,
+                'UpdateOrderDataDto' => UpdateOrderDataDto::class,
+                'VatDataDto'         => VatDataDto::class,
             ],
         ]);
         $soapServer->setObject($this->orderFacade);
