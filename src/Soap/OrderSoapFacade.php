@@ -2,14 +2,18 @@
 
 namespace App\Soap;
 
+use App\Dto\UpdateOrderDataDto;
 use App\Service\OrderManager;
 use App\Service\ArticleManager;
 
+/**
+ * Facade service for handling SOAP requests regarding order management.
+ */
 class OrderSoapFacade
 {
     public function __construct(
-        private OrderManager $orderManager,
-        private ArticleManager $articleManager
+        private readonly OrderManager $orderManager,
+        private readonly ArticleManager $articleManager
     ) {}
 
     /**
@@ -25,28 +29,41 @@ class OrderSoapFacade
         try {
             return $this->articleManager->addArticleToOrder($orderId, $articleId, $quantity);
         } catch (\Exception $e) {
-            // Catch standard exceptions and convert them into SOAP faults
             throw new \SoapFault("Client", $e->getMessage());
         }
     }
 
-    public function createEmptyOrder(): int
+    /**
+     * Creates a new empty draft order.
+     *
+     * @param string|null $name Optional order name (defaults to 'Draft Order' or 'Draft Order (N)')
+     * @return array{id: int, status: string} Created order details
+     */
+    public function createEmptyOrder(?string $name = null): array
     {
         try {
-            return $this->orderManager->createEmptyOrder();
+            $id = $this->orderManager->createEmptyOrder($name);
+            return [
+                'id' => $id,
+                'status' => 'created',
+            ];
         } catch (\Exception $e) {
             throw new \SoapFault("Server", "Failed to create order");
         }
     }
 
-    public function updateOrder(int $orderId, string $fio): string
+    /**
+     * Updates order details, delivery information, VAT, and article items based on the input DTO payload.
+     *
+     * @param UpdateOrderDataDto $data Order data DTO payload
+     * @return string Operation result message
+     */
+    public function updateOrder(UpdateOrderDataDto $data): string
     {
         try {
-            return $this->orderManager->updateOrder($orderId, $fio);
+            return $this->orderManager->updateOrder($data);
         } catch (\Exception $e) {
             throw new \SoapFault("Client", $e->getMessage());
         }
     }
-
-    // ... other methods
 }
