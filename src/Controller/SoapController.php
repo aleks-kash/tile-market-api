@@ -3,25 +3,23 @@
 namespace App\Controller;
 
 use App\Dto\SoapOrderRequestInterface;
-use App\Service\OrderProcessor;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
-use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use App\Soap\OrderSoapFacade;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Laminas\Soap\AutoDiscover;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Controller to handle SOAP requests for order creation and management.
  */
-final class SoapController
+final class SoapController extends AbstractController
 {
     /**
      * SoapController constructor.
-     *
-     * @param OrderProcessor $orderProcessor
-     * @param SerializerInterface $serializer
      */
     public function __construct(
-        private readonly OrderProcessor $orderProcessor,
-        private readonly SerializerInterface $serializer
+        private OrderSoapFacade $orderFacade
     ) {
     }
 
@@ -32,26 +30,43 @@ final class SoapController
      * @return Response A SOAP response containing the created/updated order ID or a SOAP Fault.
      */
     public function run(
-        #[MapRequestPayload(acceptFormat: 'xml')] SoapOrderRequestInterface $query
+        string $service,
+        Request $request
     ): Response {
-        $order = $this->orderProcessor->process($query);
+        $endpointUrl = $this->generateUrl(
+            'soap_endpoint',
+            [],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        );
 
-        $responseData = [
-            '@xmlns:soap' => 'http://schemas.xmlsoap.org/soap/envelope/',
-            'soap:Body' => [
-                'CreateOrderResponse' => [
-                    'id' => $order->getId(),
-                    'status' => 'created',
-                    'articles_count' => $order->getArticles()->count(),
-                ],
-            ],
-        ];
+        // If the client requested a WSDL (GET /soap/orders?wsdl)
+        if ($request->query->has('wsdl')) {
+            $autodiscover = new AutoDiscover();
+            // Pass the name of the facade class.
+            $autodiscover->setClass(get_class($this->orderFacade));
+            // We specify the URL where the client should send POST requests.
+            $autodiscover->setUri($endpointUrl);
+            $autodiscover->setServiceName(ucfirst($service) . 'Service');
 
-        $xml = $this->serializer->serialize($responseData, 'xml', [
-            'xml_root_node_name' => 'soap:Envelope',
-            'xml_encoding' => 'UTF-8',
-        ]);
+            return new Response(
+                $autodiscover->toXml(),
+                200,
+                ['Content-Type' => 'text/xml; charset=UTF-8']
+            );
+        }
 
-        return new Response($xml, 201, ['Content-Type' => 'text/xml; charset=UTF-8']);
+        // Processing a live SOAP request (POST /soap/orders)
+        // For simplicity, we'll use non-WSDL mode, since we just generated it ourselves.
+        $soapServer = new \SoapServer(null, ['uri' => $endpointUrl]);
+        $soapServer->setObject($this->orderFacade);
+
+        $response = new Response();
+        $response->headers->set('Content-Type', 'text/xml; charset=UTF-8');
+
+        ob_start();
+        $soapServer->handle();
+        $response->setContent(ob_get_clean());
+
+        return $response;
     }
 }
