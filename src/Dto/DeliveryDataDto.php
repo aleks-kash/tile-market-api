@@ -60,5 +60,5 @@ class DeliveryDataDto
     /**
      * @var int[] Phone code array
      */
-    public mixed $phoneCode = null;
+    public mixed $phoneCode = [];
 }
