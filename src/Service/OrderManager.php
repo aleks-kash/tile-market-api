@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * Responsible for:
  * - Creating new orders with all required database fields filled.
  * - Unique naming of user orders (Draft Order, Draft Order (1), etc.).
- * - Obtaining and linking the user token via UserTokenProvider.
+ * - Obtaining and binding a user token via UserTokenProvider.
  * - Updating and deleting orders in the database.
  */
 class OrderManager
@@ -33,7 +33,7 @@ class OrderManager
      * Creates a new empty order and saves it to the database with all required fields.
      *
      * @param string|null $name Order name (default: 'Draft Order').
-     * @param string $locale Language code (default: 'ru').
+     * @param string $locale Language code (default: 'en').
      * @param string $currency Order currency (default: 'EUR').
      * @param string $measure Unit of measurement (default: 'm').
      * @param int $payType Payment method (default: 0).
@@ -45,7 +45,7 @@ class OrderManager
      */
     public function createEmptyOrder(
         ?string $name = null,
-        string $locale = 'ru',
+        string $locale = 'en',
         string $currency = 'EUR',
         string $measure = 'm',
         int $payType = 0,
@@ -119,53 +119,54 @@ class OrderManager
     /**
      * Updates order parameters based on the passed DTO data or array.
      *
-     * @param UpdateOrderDataDto|array $data Order data to update.
+     * @param UpdateOrderDataDto $dto Order data to update.
      * @return string Execution status.
      * @throws \Exception If the order is not found.
      */
-    public function updateOrder(UpdateOrderDataDto|array $data): string
+    public function updateOrder(UpdateOrderDataDto $dto): string
     {
-        $dataArr = ($data instanceof UpdateOrderDataDto)
-            ? (array) $data
-            : (json_decode(json_encode($data), true) ?? []);
-
-        $id = $dataArr['id'] ?? null;
-        if (!$id) {
+        if (!$dto->id) {
             throw new \Exception("Order ID or hash is required");
         }
 
-        $order = is_numeric($id)
-            ? $this->em->getRepository(Order::class)->find((int) $id)
-            : $this->em->getRepository(Order::class)->findOneBy(['hash' => (string) $id]);
+        $order = $this->em->getRepository(Order::class)->findOneBy(['hash' => $dto->id]);
 
         if (!$order) {
             throw new \Exception("Order not found");
         }
 
-        if (isset($dataArr['clientName']) && $dataArr['clientName'] !== null) {
-            $order->setClientName((string) $dataArr['clientName']);
+        $order->setClientName($dto->clientName);
+        $order->setClientSurname($dto->clientSurname);
+        $order->setCompanyName($dto->companyName);
+        $order->setTaxNumber($dto->taxNumber);
+        $order->setEmail($dto->email);
+        $order->setDescription($dto->description);
+        $order->setPayType($dto->payType ?? 0);
+        $order->setCurrency($dto->currency ?? 'EUR');
+
+        if ($dto->delivery !== null) {
+            $order->setDeliveryCountry($dto->delivery->country);
+            $order->setDeliveryIndex($dto->delivery->index);
+            $order->setDeliveryRegion($dto->delivery->region);
+            $order->setDeliveryCity($dto->delivery->city);
+            $order->setDeliveryAddress($dto->delivery->street);
+            $order->setDeliveryBuilding($dto->delivery->building);
+            $order->setDeliveryApartmentOffice($dto->delivery->apartmentOffice);
+            $order->setDeliveryPhone($dto->delivery->phone);
+
+            if ($dto->delivery->phoneCode !== null) {
+                $phoneCodeVal = is_array($dto->delivery->phoneCode)
+                    ? implode(',', $dto->delivery->phoneCode)
+                    : (string) $dto->delivery->phoneCode;
+                $order->setDeliveryPhoneCode($phoneCodeVal);
+            }
         }
-        if (isset($dataArr['clientSurname']) && $dataArr['clientSurname'] !== null) {
-            $order->setClientSurname((string) $dataArr['clientSurname']);
+
+        if ($dto->vat !== null && $dto->vat->type !== null) {
+            $order->setVatType($dto->vat->type);
         }
-        if (isset($dataArr['companyName']) && $dataArr['companyName'] !== null) {
-            $order->setCompanyName((string) $dataArr['companyName']);
-        }
-        if (isset($dataArr['taxNumber']) && $dataArr['taxNumber'] !== null) {
-            $order->setTaxNumber((string) $dataArr['taxNumber']);
-        }
-        if (isset($dataArr['email']) && $dataArr['email'] !== null) {
-            $order->setEmail((string) $dataArr['email']);
-        }
-        if (isset($dataArr['description']) && $dataArr['description'] !== null) {
-            $order->setDescription((string) $dataArr['description']);
-        }
-        if (isset($dataArr['payType']) && $dataArr['payType'] !== null) {
-            $order->setPayType((int) $dataArr['payType']);
-        }
-        if (isset($dataArr['currency']) && $dataArr['currency'] !== null) {
-            $order->setCurrency((string) $dataArr['currency']);
-        }
+
+        $order->setUpdateDate(new \DateTime());
 
         $this->em->flush();
 

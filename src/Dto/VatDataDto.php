@@ -8,7 +8,7 @@ namespace App\Dto;
 class VatDataDto
 {
     /**
-     * @var int|null VAT type ID
+     * @var int VAT type ID
      */
     public ?int $type = null;
 }

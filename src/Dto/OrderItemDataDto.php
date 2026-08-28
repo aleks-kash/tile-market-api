@@ -8,12 +8,12 @@ namespace App\Dto;
 class OrderItemDataDto
 {
     /**
-     * @var float|null Article quantity
+     * @var float Article quantity
      */
     public ?float $amount = null;
 
     /**
-     * @var int|null Article type ID
+     * @var int Article type ID
      */
     public ?int $type = null;
 }
