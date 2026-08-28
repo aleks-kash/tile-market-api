@@ -19,24 +19,17 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  */
 final class SoapController extends AbstractController
 {
-    /**
-     * SoapController constructor.
-     */
     public function __construct(
-        private OrderSoapFacade $orderFacade
+        private readonly OrderSoapFacade $orderFacade,
     ) {}
 
     /**
      * Handle incoming SOAP XML requests, process order payload, and return SOAP XML response.
      *
-     * @param Request $request
-     * @param string $service
+     * @param Request $request The HTTP request containing SOAP XML.
      * @return Response A SOAP response containing the result or a SOAP Fault.
      */
-    public function run(
-        Request $request,
-        string $service = 'orders'
-    ): Response {
+    public function run(Request $request): Response {
         // Generate the absolute URL of the current endpoint (without ?wsdl).
         $endpointUrl = $this->generateUrl(
             'api_soap_orders',
@@ -48,7 +41,7 @@ final class SoapController extends AbstractController
         $autodiscover = new AutoDiscover(new ArrayOfTypeSequence());
         $autodiscover->setClass(get_class($this->orderFacade));
         $autodiscover->setUri($endpointUrl);
-        $autodiscover->setServiceName(ucfirst($service) . 'Service');
+        $autodiscover->setServiceName('OrderService');
 
         $wsdlXml = $autodiscover->toXml();
 
@@ -83,7 +76,7 @@ final class SoapController extends AbstractController
 
         ob_start();
         @$soapServer->handle($request->getContent());
-        $response->setContent(ob_get_clean());
+        $response->setContent((string) ob_get_clean());
 
         return $response;
     }
