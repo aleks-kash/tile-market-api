@@ -3,7 +3,6 @@
 namespace App\EventListener;
 
 use App\Exception\SoapValidationException;
-use SoapFault;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,12 +28,14 @@ final class ExceptionListener
         $request = $event->getRequest();
 
         // Determine the HTTP status code
-        $statusCode = $exception->getCode() ?? Response::HTTP_INTERNAL_SERVER_ERROR;
+        $statusCode = Response::HTTP_INTERNAL_SERVER_ERROR;
         $message = 'An unexpected error occurred.';
 
         if ($exception instanceof HttpExceptionInterface) {
             $statusCode = $exception->getStatusCode();
             $message = $exception->getMessage();
+        } elseif ($this->isValidHttpStatusCode((int) $exception->getCode())) {
+            $statusCode = (int) $exception->getCode();
         }
 
         // Format REST errors list
@@ -201,5 +202,16 @@ final class ExceptionListener
         );
         $logFileName = sprintf('error-%s.log', date('Y-m-d'));
         @file_put_contents($logDir . '/' . $logFileName, $logMessage, FILE_APPEND);
+    }
+
+    /**
+     * Checks that HTTP status code is within valid Response range.
+     *
+     * @param int $statusCode HTTP status code to validate.
+     * @return bool True if valid HTTP status code, false otherwise.
+     */
+    private function isValidHttpStatusCode(int $statusCode): bool
+    {
+        return $statusCode >= 100 && $statusCode < 600;
     }
 }
