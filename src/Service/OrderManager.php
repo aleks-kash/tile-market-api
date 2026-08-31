@@ -85,11 +85,11 @@ readonly class OrderManager
      */
     public function updateOrder(UpdateOrderDataDto $dto): void
     {
-        if (!$dto->id) {
+        if (!$dto->orderHash) {
             throw new \Exception("Order ID or hash is required");
         }
 
-        $order = $this->em->getRepository(Order::class)->findOneBy(['hash' => $dto->id]);
+        $order = $this->em->getRepository(Order::class)->findOneBy(['hash' => $dto->orderHash]);
 
         if (!$order) {
             throw new NotFoundHttpException("Order not found");

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Dto\AddArticleRequestDto;
 use App\Dto\DeliveryDataDto;
 use App\Dto\UpdateOrderDataDto;
 use App\Dto\VatDataDto;
@@ -62,11 +63,12 @@ final class SoapController extends AbstractController
             'trace' => 1,
             'exceptions' => true,
             'cache_wsdl' => WSDL_CACHE_NONE,
-            'features' => SOAP_SINGLE_ELEMENT_ARRAYS, // <--- Гарантирует массив для списков!
+            'features' => SOAP_SINGLE_ELEMENT_ARRAYS, // Guarantees an array for lists.
             'classmap' => [
-                'DeliveryDataDto'    => DeliveryDataDto::class,
-                'UpdateOrderDataDto' => UpdateOrderDataDto::class,
-                'VatDataDto'         => VatDataDto::class,
+                'AddArticleRequestDto' => AddArticleRequestDto::class,
+                'DeliveryDataDto'      => DeliveryDataDto::class,
+                'UpdateOrderDataDto'   => UpdateOrderDataDto::class,
+                'VatDataDto'           => VatDataDto::class,
             ],
         ]);
         $soapServer->setObject($this->orderFacade);

@@ -12,8 +12,8 @@ class UpdateOrderDataDto
     /**
      * @var string Order identifier or hash
      */
-    #[Assert\NotNull(message: 'order_id is required when updating an existing order.')]
-    public ?string $id = null;
+    #[Assert\NotNull(message: 'order hash is required when updating an existing order.')]
+    public ?string $orderHash = null;
 
     /**
      * @var string Customer first name
