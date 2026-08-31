@@ -67,3 +67,12 @@
 
 # Local debug files
 /test_metadata.php
+/dump.sql
+/task.md
+/task_re.md
+/test_wsdl_run.php
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###
