@@ -8,6 +8,11 @@ api_price:
   controller: App\Controller\PriceController::run
   methods: [GET]
 
+api_soap_orders:
+  path: /api/v1/soap/orders
+  controller: App\Controller\SoapController::run
+  methods: [GET, POST]
+
 controllers:
   resource:
     path: ../src/Controller/

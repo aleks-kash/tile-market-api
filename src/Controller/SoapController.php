@@ -2,80 +2,84 @@
 
 namespace App\Controller;
 
-use App\Entity\Order;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Dto\AddArticleRequestDto;
+use App\Dto\DeliveryDataDto;
+use App\Dto\UpdateOrderDataDto;
+use App\Dto\VatDataDto;
+use App\Soap\OrderSoapFacade;
+use Laminas\Soap\AutoDiscover;
+use Laminas\Soap\Wsdl\ComplexTypeStrategy\ArrayOfTypeSequence;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
-final class SoapController
+/**
+ * Controller to handle SOAP requests for order creation and management.
+ */
+final class SoapController extends AbstractController
 {
-    public function __construct(private readonly EntityManagerInterface $entityManager)
-    {
+    public function __construct(
+        private readonly OrderSoapFacade $orderFacade,
+    ) {
     }
 
-    #[Route('/api/v1/soap', name: 'api_soap', methods: ['POST'])]
-    public function __invoke(Request $request): Response
+    /**
+     * Handle incoming SOAP XML requests, process order payload, and return SOAP XML response.
+     *
+     * @param Request $request The HTTP request containing SOAP XML.
+     * @return Response A SOAP response containing the result or a SOAP Fault.
+     */
+    public function run(Request $request): Response
     {
-        $xml = trim((string) $request->getContent());
-        if ($xml === '') {
-            return $this->faultResponse('Empty SOAP body', 400);
-        }
-
-        libxml_use_internal_errors(true);
-        $document = simplexml_load_string($xml);
-
-        if ($document === false) {
-            return $this->faultResponse('Invalid XML payload', 400);
-        }
-
-        $factory = $this->extractNodeValue($document, 'factory');
-        $collection = $this->extractNodeValue($document, 'collection');
-        $article = $this->extractNodeValue($document, 'article');
-        $price = $this->extractNodeValue($document, 'price');
-
-        if ($factory === null || $collection === null || $article === null || $price === null) {
-            return $this->faultResponse('Missing required order fields', 422);
-        }
-
-        $order = (new Order())
-            ->setFactory($factory)
-            ->setCollection($collection)
-            ->setArticle($article)
-            ->setPrice($price)
-            ->setPayload($xml);
-
-        $this->entityManager->persist($order);
-        $this->entityManager->flush();
-
-        $response = sprintf(
-            '<?xml version="1.0" encoding="UTF-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><CreateOrderResponse><id>%d</id><status>created</status></CreateOrderResponse></soap:Body></soap:Envelope>',
-            $order->getId()
+        // Generate the absolute URL of the current endpoint (without ?wsdl).
+        $endpointUrl = $this->generateUrl(
+            'api_soap_orders',
+            [],
+            UrlGeneratorInterface::ABSOLUTE_URL
         );
 
-        return new Response($response, 201, ['Content-Type' => 'text/xml; charset=UTF-8']);
-    }
+        // Generating WSDL XML.
+        $autodiscover = new AutoDiscover(new ArrayOfTypeSequence());
+        $autodiscover->setClass(get_class($this->orderFacade));
+        $autodiscover->setUri($endpointUrl);
+        $autodiscover->setServiceName('OrderService');
 
-    private function faultResponse(string $message, int $statusCode): Response
-    {
-        $response = sprintf(
-            '<?xml version="1.0" encoding="UTF-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><soap:Fault><faultcode>Client</faultcode><faultstring>%s</faultstring></soap:Fault></soap:Body></soap:Envelope>',
-            htmlspecialchars($message, ENT_XML1 | ENT_QUOTES, 'UTF-8')
-        );
+        $wsdlXml = $autodiscover->toXml();
 
-        return new Response($response, $statusCode, ['Content-Type' => 'text/xml; charset=UTF-8']);
-    }
-
-    private function extractNodeValue(\SimpleXMLElement $xml, string $name): ?string
-    {
-        $matches = $xml->xpath(sprintf('//*[local-name()="%s"]', $name));
-
-        if (!is_array($matches) || $matches === []) {
-            return null;
+        // If the client requested a WSDL (GET /soap/orders?wsdl).
+        if ($request->query->has('wsdl')) {
+            return new Response(
+                $wsdlXml,
+                200,
+                ['Content-Type' => 'text/xml; charset=UTF-8']
+            );
         }
 
-        $value = trim((string) $matches[0]);
+        // We pass the WSDL to SoapServer via the data:// URI without an HTTP request.
+        $wsdlDataUri = 'data://text/xml;base64,' . base64_encode($wsdlXml);
 
-        return $value !== '' ? $value : null;
+        $soapServer = new \SoapServer($wsdlDataUri, [
+            'trace' => 1,
+            'exceptions' => true,
+            'cache_wsdl' => WSDL_CACHE_NONE,
+            'features' => SOAP_SINGLE_ELEMENT_ARRAYS, // Guarantees an array for lists.
+            'classmap' => [
+                'AddArticleRequestDto' => AddArticleRequestDto::class,
+                'DeliveryDataDto'      => DeliveryDataDto::class,
+                'UpdateOrderDataDto'   => UpdateOrderDataDto::class,
+                'VatDataDto'           => VatDataDto::class,
+            ],
+        ]);
+        $soapServer->setObject($this->orderFacade);
+
+        $response = new Response();
+        $response->headers->set('Content-Type', 'text/xml; charset=UTF-8');
+
+        ob_start();
+        @$soapServer->handle($request->getContent());
+        $response->setContent((string) ob_get_clean());
+
+        return $response;
     }
 }
