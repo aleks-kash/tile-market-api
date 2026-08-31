@@ -43,11 +43,11 @@ class OrderSoapFacade
     /**
      * Creates a new empty draft order.
      *
-     * @param string|null $name Optional order name (defaults to 'Draft Order' or 'Draft Order (N)').
+     * @param string $name Optional order name (defaults to 'Draft Order' or 'Draft Order (N)').
      *
      * @return array{id: int, status: string} Created order details.
      */
-    public function createEmptyOrder(?string $name = null): array
+    public function createEmptyOrder(string $name = ''): array
     {
         try {
             $id = $this->orderManager->createEmptyOrder($name);
