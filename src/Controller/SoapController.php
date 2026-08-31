@@ -77,8 +77,11 @@ final class SoapController extends AbstractController
         $response->headers->set('Content-Type', 'text/xml; charset=UTF-8');
 
         ob_start();
-        @$soapServer->handle($request->getContent());
-        $response->setContent((string) ob_get_clean());
+        try {
+            @$soapServer->handle($request->getContent());
+        } finally {
+            $response->setContent((string) ob_get_clean());
+        }
 
         return $response;
     }

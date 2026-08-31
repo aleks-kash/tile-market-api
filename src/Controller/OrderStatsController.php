@@ -30,7 +30,6 @@ final class OrderStatsController
     public function run(
         #[MapQueryString(validationFailedStatusCode: 400)] OrderStatsRequestDto $query
     ): JsonResponse
-
     {
         $stats = $this->orderRepository->getGroupedStats($query->page, $query->limit, $query->group_by);
         $totalPages = $query->limit > 0 ? (int) ceil($stats['total_groups'] / $query->limit) : 0;
