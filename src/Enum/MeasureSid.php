@@ -3,11 +3,18 @@
 namespace App\Enum;
 
 /**
- * Unit of measurement identifiers (Measure SID).
+ * List of  unit of measurement identifiers.
+ *
+ * Last ID: 7
  */
 enum MeasureSid: int
 {
     use EnumTrait;
+
+    /**
+     * Kilograms (kg).
+     */
+    case KG = 5;
 
     /**
      * Meters (m).
@@ -25,16 +32,6 @@ enum MeasureSid: int
     case M3 = 3;
 
     /**
-     * Pieces (pcs).
-     */
-    case PCS = 4;
-
-    /**
-     * Kilograms (kg).
-     */
-    case KG = 5;
-
-    /**
      * Packages / Boxes (pack).
      */
     case PACK = 6;
@@ -45,10 +42,23 @@ enum MeasureSid: int
     case PALLET = 7;
 
     /**
+     * Pieces (pcs).
+     */
+    case PCS = 4;
+
+    /**
      * Returns the default enum member.
      */
-    public static function default(): static
+    public static function default(): self
     {
         return self::M;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function constantSid(string $name): string
+    {
+        return strtolower($name);
     }
 }

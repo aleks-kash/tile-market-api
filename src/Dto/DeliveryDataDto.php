@@ -10,55 +10,55 @@ class DeliveryDataDto
     /**
      * @var int Country numeric code
      */
-    public ?int $country = null;
+    public int $country = 0;
 
     /**
      * @var string Postal ZIP / Index code
      */
-    public ?string $index = null;
+    public string $index = '';
 
     /**
      * @var string Region / State name
      */
-    public ?string $region = null;
+    public string $region = '';
 
     /**
      * @var string City name
      */
-    public ?string $city = null;
+    public string $city = '';
 
     /**
      * @var string Street address
      */
-    public ?string $street = null;
+    public string $street = '';
 
     /**
      * @var string Building / House number
      */
-    public ?string $building = null;
+    public string $building = '';
 
     /**
      * @var string Apartment or office number
      */
-    public ?string $apartmentOffice = null;
+    public string $apartmentOffice = '';
 
     /**
      * @var string KLADR classification ID
      */
-    public ?string $kladrId = null;
+    public string $kladrId = '';
 
     /**
      * @var string OKATO classification ID
      */
-    public ?string $okatoId = null;
+    public string $okatoId = '';
 
     /**
      * @var string Contact phone number
      */
-    public ?string $phone = null;
+    public string $phone = '';
 
     /**
-     * @var int[] Phone code array
+     * @var int Phone code array
      */
-    public mixed $phoneCode = [];
+    public mixed $phoneCode = 1;
 }

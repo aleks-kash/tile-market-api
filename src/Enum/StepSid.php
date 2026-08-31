@@ -3,16 +3,13 @@
 namespace App\Enum;
 
 /**
- * Order checkout step identifiers (Step SID).
+ * List of order checkout step identifiers.
+ *
+ * Last ID: 4
  */
 enum StepSid: int
 {
     use EnumTrait;
-
-    /**
-     * Step 1: Shopping cart.
-     */
-    case CART = 1;
 
     /**
      * Step 2: Customer details and delivery address.
@@ -20,9 +17,9 @@ enum StepSid: int
     case ADDRESS = 2;
 
     /**
-     * Step 3: Payment method selection.
+     * Step 1: Shopping cart.
      */
-    case PAYMENT = 3;
+    case CART = 1;
 
     /**
      * Step 4: Order confirmation.
@@ -30,9 +27,14 @@ enum StepSid: int
     case CONFIRMATION = 4;
 
     /**
-     * Returns the default enum member.
+     * Step 3: Payment method selection.
      */
-    public static function default(): static
+    case PAYMENT = 3;
+
+    /**
+     * @inheritDoc
+     */
+    public static function default(): self
     {
         return self::CART;
     }

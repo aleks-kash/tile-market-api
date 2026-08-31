@@ -21,7 +21,8 @@ final class SoapController extends AbstractController
 {
     public function __construct(
         private readonly OrderSoapFacade $orderFacade,
-    ) {}
+    ) {
+    }
 
     /**
      * Handle incoming SOAP XML requests, process order payload, and return SOAP XML response.
@@ -29,7 +30,8 @@ final class SoapController extends AbstractController
      * @param Request $request The HTTP request containing SOAP XML.
      * @return Response A SOAP response containing the result or a SOAP Fault.
      */
-    public function run(Request $request): Response {
+    public function run(Request $request): Response
+    {
         // Generate the absolute URL of the current endpoint (without ?wsdl).
         $endpointUrl = $this->generateUrl(
             'api_soap_orders',

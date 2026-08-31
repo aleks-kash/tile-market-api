@@ -24,11 +24,9 @@ trait EnumTrait
     /**
      * Returns a list of all identifiers.
      *
-     * This method returns strings in value for compatibility with {@link SidTrait}.
-     * For example, {@link SidTrait::idSid()}, {@link SidTrait::sidId()} and
-     * {@link SidTrait::random()} call this method and require that value be a string.
+     * This method returns enum cases in values indexed by positive numeric IDs.
      *
-     * @return string[] A key - <tt>id</tt>, value - <tt>sid</tt>.
+     * @return array<int, static> A key - <tt>id</tt>, value - enum case.
      */
     public static function all(): array
     {
@@ -44,7 +42,14 @@ trait EnumTrait
                 continue;
             }
 
-            $all[$item->value] = static::constantSid($item->name);
+            $all[$item->value] = $item;
+        }
+
+        if (!$all) {
+            throw new \LogicException(sprintf(
+                'Enum %s has no valid positive integer SID cases.',
+                static::class
+            ));
         }
 
         SidService::$all[$class_name] = $all;
@@ -59,7 +64,31 @@ trait EnumTrait
      */
     public static function default(): static
     {
-        return static::cases()[0];
+        $a_id_list = array_keys(static::all());
+        $id = min($a_id_list);
+
+        return static::idSid($id);
+    }
+
+    /**
+     * Returns the default id of element (default is the first case in the enum).
+     *
+     * @return int The default id element.
+     */
+    public static function defaultId(): int
+    {
+        return static::default()->value;
+    }
+
+    /**
+     * Returns the default sid name of element (default is the first case in the enum).
+     *
+     * @return string Sid name.
+     */
+    public static function defaultSid(): string
+    {
+        $sid = strtoupper(static::default()->name);
+        return static::constantSid($sid);
     }
 
     /**
@@ -71,7 +100,7 @@ trait EnumTrait
      */
     public static function idExists(int $id): bool
     {
-        return in_array($id, static::cases());
+        return isset(static::all()[$id]);
     }
 
     /**
@@ -92,7 +121,7 @@ trait EnumTrait
             ));
         }
 
-        return static::cases()[$id];
+        return static::all()[$id];
     }
 
     /**
@@ -104,7 +133,13 @@ trait EnumTrait
      */
     public static function sidExists(string $sid): bool
     {
-        return in_array($sid, array_flip(static::cases()));
+        foreach (static::all() as $item) {
+            if (static::constantSid($item->name) === $sid) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -117,14 +152,16 @@ trait EnumTrait
      */
     public static function sidId(string $sid): static
     {
-        if (!static::sidExists($sid)) {
-            throw new \InvalidArgumentException(sprintf(
-                'Unknown code "%s" for enum %s',
-                $sid,
-                static::class
-            ));
+        foreach (static::all() as $item) {
+            if (static::constantSid($item->name) === $sid) {
+                return $item;
+            }
         }
 
-        return static::cases()[array_flip(static::cases())[$sid]];
+        throw new \InvalidArgumentException(sprintf(
+            'Unknown code "%s" for enum %s',
+            $sid,
+            static::class
+        ));
     }
 }

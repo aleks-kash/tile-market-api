@@ -3,43 +3,49 @@
 namespace App\Enum;
 
 /**
- * Payment method identifiers (PayType SID).
+ * List of payment method identifiers.
+ *
+ * Last ID: 8
  */
 enum PayTypeSid: int
 {
     use EnumTrait;
 
     /**
-     * Default payment method.
+     * Wire - Bank transfer.
      */
-    case DEFAULT = 0;
+    case BANK_TRANSFER = 3;
 
     /**
      * Credit - Debit card payment.
      */
-    case CARD = 1;
+    case CREDIT_CARD = 4;
 
     /**
-     * Wire - Bank transfer.
+     * Credit - American Express.
      */
-    case BANK_TRANSFER = 2;
+    case CREDIT_CARD_AX = 5;
 
     /**
-     * Cash payment.
+     * Cryptocurrency is a digital or virtual form of money.
      */
-    case CASH = 3;
+    case CRYPTO_CURRENCY = 8;
+
+    /**
+     * GooglePay electronic payment system.
+     */
+    case G_PAY = 7;
 
     /**
      * PayPal electronic payment system.
      */
-    case PAYPAL = 4;
+    case PAYPAL = 1;
 
     /**
-     *
-     * Returns the default enum member.
+     * @inheritDoc
      */
-    public static function default(): static
+    public static function default(): self
     {
-        return self::DEFAULT;
+        return self::BANK_TRANSFER;
     }
 }

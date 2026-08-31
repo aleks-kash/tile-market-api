@@ -3,16 +3,13 @@
 namespace App\Enum;
 
 /**
- * Currency identifiers (Currency SID).
+ * List of currency identifiers.
+ *
+ * Last ID: 5
  */
 enum CurrencySid: int
 {
     use EnumTrait;
-
-    /**
-     * US Dollar (USD).
-     */
-    case USD = 1;
 
     /**
      * Euro (EUR).
@@ -35,10 +32,15 @@ enum CurrencySid: int
     case SEK = 5;
 
     /**
-     * Returns the default enum member.
+     * US Dollar (USD).
      */
-    public static function default(): static
+    case USD = 1;
+
+    /**
+     * @inheritDoc
+     */
+    public static function default(): self
     {
-        return self::USD;
+        return self::EUR;
     }
 }

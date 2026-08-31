@@ -65,7 +65,7 @@ final class ExceptionListener
             $s_soap_fault_xml = $this->buildSoapFaultXml($exception, $errors);
             $o_response = new Response(
                 $s_soap_fault_xml,
-                $statusCode,
+                Response::HTTP_INTERNAL_SERVER_ERROR,
                 ['Content-Type' => 'text/xml; charset=UTF-8']
             );
             $event->setResponse($o_response);

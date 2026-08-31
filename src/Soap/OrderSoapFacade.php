@@ -28,6 +28,7 @@ class OrderSoapFacade
      * @param int $orderId Order ID.
      * @param int $articleId Article ID.
      * @param int $quantity Quantity of the article.
+     *
      * @return string Operation result message.
      */
     public function addArticleToOrder(int $orderId, int $articleId, int $quantity): string
@@ -43,6 +44,7 @@ class OrderSoapFacade
      * Creates a new empty draft order.
      *
      * @param string|null $name Optional order name (defaults to 'Draft Order' or 'Draft Order (N)').
+     *
      * @return array{id: int, status: string} Created order details.
      */
     public function createEmptyOrder(?string $name = null): array
@@ -62,6 +64,7 @@ class OrderSoapFacade
      * Updates order details, delivery information, VAT, and article items based on the input DTO payload.
      *
      * @param \App\Dto\UpdateOrderDataDto|\stdClass|array $data Order data DTO payload
+     *
      * @return string Operation result message
      */
     public function updateOrder(mixed $data): string
@@ -93,6 +96,8 @@ class OrderSoapFacade
             throw new SoapValidationException($a_error_list);
         }
 
-        return $this->orderManager->updateOrder($dto);
+        $this->orderManager->updateOrder($dto);
+
+        return "Order updated successfully";
     }
 }

@@ -2,6 +2,11 @@
 
 namespace App\Entity;
 
+use App\Enum\CurrencySid;
+use App\Enum\LocaleSid;
+use App\Enum\MeasureSid;
+use App\Enum\PayTypeSid;
+use App\Enum\StatusSid;
 use App\Repository\OrderRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -24,7 +29,7 @@ class Order
 
     /** hash заказа */
     #[ORM\Column(type: Types::STRING, length: 32, options: ['comment' => 'hash заказа'])]
-    private string $hash = '';
+    private string $hash;
 
     #[ORM\Column(name: 'user_id', type: Types::INTEGER, nullable: true)]
     private ?int $userId = null;
@@ -39,7 +44,7 @@ class Order
 
     /** Статус заказа */
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 1, 'comment' => 'Статус заказа'])]
-    private int $status = 1;
+    private int $status;
 
     /** Контактный E-mail */
     #[ORM\Column(type: Types::STRING, length: 100, nullable: true, options: ['comment' => 'Контактный E-mail'])]
@@ -47,7 +52,7 @@ class Order
 
     /** Частное лицо или плательщик НДС */
     #[ORM\Column(name: 'vat_type', type: Types::INTEGER, options: ['default' => 0, 'comment' => 'Частное лицо или плательщик НДС'])]
-    private int $vatType = 0;
+    private int $vatType;
 
     /** НДС-номер */
     #[ORM\Column(name: 'vat_number', type: Types::STRING, length: 100, nullable: true, options: ['comment' => 'НДС-номер'])]
@@ -143,7 +148,7 @@ class Order
 
     /** Выбранный тип оплаты */
     #[ORM\Column(name: 'pay_type', type: Types::SMALLINT, options: ['comment' => 'Выбранный тип оплаты'])]
-    private int $payType = 0;
+    private int $payType;
 
     /** Дата до которой действует текущая цена заказа */
     #[ORM\Column(name: 'pay_date_execution', type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => 'Дата до которой действует текущая цена заказа'])]
@@ -191,7 +196,7 @@ class Order
 
     /** Локаль из которой был оформлен заказ */
     #[ORM\Column(type: Types::STRING, length: 5, options: ['comment' => 'Локаль из которой был оформлен заказ'])]
-    private string $locale = '';
+    private string $locale;
 
     /** Курс на момент оплаты */
     #[ORM\Column(name: 'cur_rate', type: Types::FLOAT, nullable: true, options: ['default' => 1, 'comment' => 'Курс на момент оплаты'])]
@@ -199,11 +204,11 @@ class Order
 
     /** Валюта при которой был оформлен заказ */
     #[ORM\Column(type: Types::STRING, length: 3, options: ['default' => 'EUR', 'comment' => 'Валюта при которой был оформлен заказ'])]
-    private string $currency = 'EUR';
+    private string $currency;
 
     /** Ед. изм. в которой был оформлен заказ */
     #[ORM\Column(type: Types::STRING, length: 3, options: ['default' => 'm', 'comment' => 'Ед. изм. в которой был оформлен заказ'])]
-    private string $measure = 'm';
+    private string $measure;
 
     /** Название заказа */
     #[ORM\Column(type: Types::STRING, length: 200, options: ['comment' => 'Название заказа'])]
@@ -227,7 +232,7 @@ class Order
 
     /** Если true то заказ не будет сброшен вследствии изменений */
     #[ORM\Column(type: Types::SMALLINT, options: ['default' => 1, 'comment' => 'Если true то заказ не будет сброшен вследствии изменений'])]
-    private int $step = 1;
+    private int $step;
 
     /** Адреса плательщика и получателя совпадают (false - разные, true - одинаковые) */
     #[ORM\Column(name: 'address_equal', type: Types::BOOLEAN, nullable: true, options: ['default' => true, 'comment' => 'Адреса плательщика и получателя совпадают (false - разные, true - одинаковые)'])]
@@ -314,6 +319,18 @@ class Order
 
     public function __construct()
     {
+        // Generate an order hash (32 hex characters).
+        $this->hash = bin2hex(random_bytes(16));
+
+        // Setting by default.
+        $this->status = StatusSid::defaultId();
+        $this->payType = PayTypeSid::defaultId();
+        $this->step = StatusSid::defaultId();
+        $this->locale = LocaleSid::defaultSid();
+        $this->currency = CurrencySid::defaultSid();
+        $this->measure = MeasureSid::defaultSid();
+        $this->vatType = MeasureSid::defaultId();
+
         $this->createDate = new \DateTime();
         $this->articles = new ArrayCollection();
     }

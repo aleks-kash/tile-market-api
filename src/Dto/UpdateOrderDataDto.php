@@ -18,53 +18,48 @@ class UpdateOrderDataDto
     /**
      * @var string Customer first name
      */
-    public ?string $clientName = null;
+    public string $clientName = '';
 
     /**
      * @var string Customer last name / surname
      */
-    public ?string $clientSurname = null;
+    public string $clientSurname = '';
 
     /**
      * @var string Customer company name
      */
-    public ?string $companyName = null;
+    public string $companyName = '';
 
     /**
      * @var string Tax identification number
      */
-    public ?string $taxNumber = null;
+    public string $taxNumber = '';
 
     /**
      * @var string Customer email address
      */
     #[Assert\Email]
-    public ?string $email = null;
+    public string $email = '';
 
     /**
      * @var string Order comments or notes
      */
-    public ?string $description = null;
+    public string $description = '';
 
     /**
      * @var int Payment method identifier
      */
-    public ?int $payType = null;
+    public int $payType = 0;
 
     /**
      * @var string Currency code
      */
-    public ?string $currency = null;
-
-    /**
-     * @var int Test flag
-     */
-    public ?int $markerTest = null;
+    public string $currency = '';
 
     /**
      * @var string Personal data agreement flag
      */
-    public ?string $personalDataAgree = null;
+    public string $personalDataAgree = '';
 
     /**
      * @var \App\Dto\DeliveryDataDto Delivery information

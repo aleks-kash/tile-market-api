@@ -3,11 +3,18 @@
 namespace App\Enum;
 
 /**
- * Locale identifiers (Locale SID).
+ * List of locale identifiers.
+ *
+ * Last ID: 10
  */
 enum LocaleSid: int
 {
     use EnumTrait;
+
+    /**
+     * German (de).
+     */
+    case DE = 2;
 
     /**
      * English (en).
@@ -15,9 +22,14 @@ enum LocaleSid: int
     case EN = 1;
 
     /**
-     * German (de).
+     * Spanish (es).
      */
-    case DE = 2;
+    case ES = 5;
+
+    /**
+     * Finnish (fi).
+     */
+    case FI = 7;
 
     /**
      * French (fr).
@@ -30,24 +42,14 @@ enum LocaleSid: int
     case IT = 4;
 
     /**
-     * Spanish (es).
+     * Dutch (nl).
      */
-    case ES = 5;
+    case NL = 8;
 
     /**
      * Polish (pl).
      */
     case PL = 6;
-
-    /**
-     * Finnish (fi).
-     */
-    case FI = 7;
-
-    /**
-     * Dutch (nl).
-     */
-    case NL = 8;
 
     /**
      * Portuguese (pt).
@@ -60,10 +62,18 @@ enum LocaleSid: int
     case SV = 10;
 
     /**
-     * Returns the default enum member.
+     * @inheritDoc
      */
-    public static function default(): static
+    public static function default(): self
     {
         return self::EN;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function constantSid(string $name): string
+    {
+        return strtolower($name);
     }
 }

@@ -3,26 +3,28 @@
 namespace App\Enum;
 
 /**
- * VAT type identifiers (VatType SID).
+ * List of VAT type identifiers.
+ *
+ * Last ID: 2
  */
 enum VatTypeSid: int
 {
     use EnumTrait;
 
     /**
-     * Individual customer - Non-VAT payer.
-     */
-    case INDIVIDUAL = 0;
-
-    /**
      * Corporate entity - VAT payer.
      */
-    case COMPANY = 1;
+    case COMPANY = 2;
+
+    /**
+     * Individual customer - Non-VAT payer.
+     */
+    case INDIVIDUAL = 1;
 
     /**
      * Returns the default enum member.
      */
-    public static function default(): static
+    public static function default(): self
     {
         return self::INDIVIDUAL;
     }

@@ -3,36 +3,13 @@
 namespace App\Enum;
 
 /**
- * Order status identifiers (Status SID).
+ * List of order status identifiers.
+ *
+ * Last ID: 7
  */
 enum StatusSid: int
 {
     use EnumTrait;
-
-    /**
-     * Order draft.
-     */
-    case DRAFT = 1;
-
-    /**
-     * New - Created.
-     */
-    case NEW = 2;
-
-    /**
-     * In processing.
-     */
-    case PROCESSING = 3;
-
-    /**
-     * Paid.
-     */
-    case PAID = 4;
-
-    /**
-     * Shipped - In transit.
-     */
-    case SHIPPED = 5;
 
     /**
      * Delivered.
@@ -40,14 +17,39 @@ enum StatusSid: int
     case DELIVERED = 6;
 
     /**
+     * Order draft.
+     */
+    case DRAFT = 1;
+
+    /**
      * Cancelled.
      */
     case CANCELLED = 7;
 
     /**
-     * Returns the default enum member.
+     * New - Created.
      */
-    public static function default(): static
+    case NEW = 2;
+
+    /**
+     * Paid.
+     */
+    case PAID = 4;
+
+    /**
+     * In processing.
+     */
+    case PROCESSING = 3;
+
+    /**
+     * Shipped - In transit.
+     */
+    case SHIPPED = 5;
+
+    /**
+     * @inheritDoc
+     */
+    public static function default(): self
     {
         return self::DRAFT;
     }

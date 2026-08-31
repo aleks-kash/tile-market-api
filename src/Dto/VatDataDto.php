@@ -10,5 +10,5 @@ class VatDataDto
     /**
      * @var int VAT type ID
      */
-    public ?int $type = null;
+    public int $type = 0;
 }
