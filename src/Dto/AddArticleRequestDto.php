@@ -8,7 +8,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * Standalone DTO for adding an article to an order.
  */
-class AddArticleRequestDto implements SoapOrderRequestInterface
+class AddArticleRequestDto
 {
     /**
      * ID of an existing order to append article to (maps to <order_id>).

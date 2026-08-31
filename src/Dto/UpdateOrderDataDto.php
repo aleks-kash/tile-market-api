@@ -70,9 +70,4 @@ class UpdateOrderDataDto
      * @var \App\Dto\VatDataDto VAT configuration
      */
     public ?VatDataDto $vat = null;
-
-    /**
-     * @var \App\Dto\OrderItemDataDto[] Order article items
-     */
-    public mixed $items = null;
 }

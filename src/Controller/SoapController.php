@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Dto\DeliveryDataDto;
-use App\Dto\OrderItemDataDto;
 use App\Dto\UpdateOrderDataDto;
 use App\Dto\VatDataDto;
 use App\Soap\OrderSoapFacade;
@@ -66,7 +65,6 @@ final class SoapController extends AbstractController
             'features' => SOAP_SINGLE_ELEMENT_ARRAYS, // <--- Гарантирует массив для списков!
             'classmap' => [
                 'DeliveryDataDto'    => DeliveryDataDto::class,
-                'OrderItemDataDto'   => OrderItemDataDto::class,
                 'UpdateOrderDataDto' => UpdateOrderDataDto::class,
                 'VatDataDto'         => VatDataDto::class,
             ],
