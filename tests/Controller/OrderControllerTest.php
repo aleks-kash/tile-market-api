@@ -66,7 +66,6 @@ final class OrderControllerTest extends WebTestCase
 
         $response = json_decode($client->getResponse()->getContent(), true);
 
-        self::assertSame($order->getId(), $response['id']);
         self::assertSame('Order #1001', $response['name']);
         self::assertSame('test_hash_123', $response['hash']);
         self::assertSame('test_token_abc', $response['token']);

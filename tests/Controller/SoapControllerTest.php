@@ -17,6 +17,12 @@ final class SoapControllerTest extends WebTestCase
     {
         parent::setUp();
         self::ensureKernelShutdown();
+
+        $container = self::getContainer();
+        $em = $container->get('doctrine')->getManager();
+        $conn = $em->getConnection();
+        $conn->executeStatement('TRUNCATE TABLE orders_article, orders CASCADE');
+        self::ensureKernelShutdown();
     }
 
     /**
@@ -31,7 +37,7 @@ final class SoapControllerTest extends WebTestCase
         self::assertResponseHeaderSame('Content-Type', 'text/xml; charset=UTF-8');
 
         $content = $client->getResponse()->getContent();
-        self::assertStringContainsString('OrdersService', $content);
+        self::assertStringContainsString('OrderService', $content);
         self::assertStringContainsString('/api/v1/soap/orders', $content);
     }
 
@@ -48,7 +54,9 @@ final class SoapControllerTest extends WebTestCase
         <?xml version="1.0" encoding="UTF-8"?>
         <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
           <soap:Body>
-            <createEmptyOrder/>
+            <createEmptyOrder>
+              <name>Test Order</name>
+            </createEmptyOrder>
           </soap:Body>
         </soap:Envelope>
         XML;
@@ -58,12 +66,9 @@ final class SoapControllerTest extends WebTestCase
 
         $responseContent = $client->getResponse()->getContent();
         self::assertStringContainsString('createEmptyOrderResponse', $responseContent);
+        self::assertStringContainsString('created', $responseContent);
 
-        preg_match('/<return[^>]*>(\d+)<\/return>/', $responseContent, $matches);
-        self::assertNotEmpty($matches[1]);
-        $orderId = (int)$matches[1];
-
-        $order = $em->getRepository(Order::class)->find($orderId);
+        $order = $em->getRepository(Order::class)->findOneBy(['name' => 'Test Order']);
         self::assertNotNull($order);
     }
 
@@ -77,18 +82,21 @@ final class SoapControllerTest extends WebTestCase
         $em = $container->get('doctrine')->getManager();
 
         $order = new Order();
+        $order->setHash('hash_soap_article_1');
         $em->persist($order);
         $em->flush();
-        $orderId = $order->getId();
 
         $soapRequest = <<<XML
         <?xml version="1.0" encoding="UTF-8"?>
         <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
           <soap:Body>
             <addArticleToOrder>
-              <orderId>{$orderId}</orderId>
-              <articleId>628660</articleId>
-              <quantity>5</quantity>
+              <data>
+                <orderHash>hash_soap_article_1</orderHash>
+                <articleId>628660</articleId>
+                <price>25.50</price>
+                <amount>5.0</amount>
+              </data>
             </addArticleToOrder>
           </soap:Body>
         </soap:Envelope>
@@ -101,7 +109,7 @@ final class SoapControllerTest extends WebTestCase
         self::assertStringContainsString('Article added', $responseContent);
 
         $em->clear();
-        $updatedOrder = $em->getRepository(Order::class)->find($orderId);
+        $updatedOrder = $em->getRepository(Order::class)->findOneBy(['hash' => 'hash_soap_article_1']);
         self::assertNotNull($updatedOrder);
         self::assertCount(1, $updatedOrder->getArticles());
     }
@@ -116,17 +124,19 @@ final class SoapControllerTest extends WebTestCase
         $em = $container->get('doctrine')->getManager();
 
         $order = new Order();
+        $order->setHash('hash_soap_update_1');
         $em->persist($order);
         $em->flush();
-        $orderId = $order->getId();
 
         $soapRequest = <<<XML
         <?xml version="1.0" encoding="UTF-8"?>
         <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
           <soap:Body>
             <updateOrder>
-              <orderId>{$orderId}</orderId>
-              <fio>Ivan Ivanov</fio>
+              <data>
+                <orderHash>hash_soap_update_1</orderHash>
+                <clientName>Ivan Ivanov</clientName>
+              </data>
             </updateOrder>
           </soap:Body>
         </soap:Envelope>
@@ -139,13 +149,13 @@ final class SoapControllerTest extends WebTestCase
         self::assertStringContainsString('Order updated', $responseContent);
 
         $em->clear();
-        $updatedOrder = $em->getRepository(Order::class)->find($orderId);
+        $updatedOrder = $em->getRepository(Order::class)->findOneBy(['hash' => 'hash_soap_update_1']);
         self::assertNotNull($updatedOrder);
         self::assertSame('Ivan Ivanov', $updatedOrder->getClientName());
     }
 
     /**
-     * Test that specifying a non-existent order_id returns a SOAP Fault.
+     * Test that specifying a non-existent orderHash returns a SOAP Fault.
      */
     public function testNonExistentOrderIdReturnsFault(): void
     {
@@ -156,8 +166,10 @@ final class SoapControllerTest extends WebTestCase
         <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
           <soap:Body>
             <updateOrder>
-              <orderId>999999</orderId>
-              <fio>NonExistent</fio>
+              <data>
+                <orderHash>non_existent_hash_999</orderHash>
+                <clientName>NonExistent</clientName>
+              </data>
             </updateOrder>
           </soap:Body>
         </soap:Envelope>
