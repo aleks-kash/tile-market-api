@@ -5,12 +5,22 @@ namespace App\Controller;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
+/**
+ * Controller to handle full-text search queries for orders against the Manticore search engine index.
+ */
 final class OrderSearchController
 {
+    /**
+     * OrderSearchController constructor.
+     *
+     * @param HttpClientInterface $httpClient The HTTP client used to query the Manticore server.
+     * @param string $manticoreUrl The base URL of the Manticore service.
+     */
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         #[Autowire(env: 'MANTICORE_URL')]
@@ -18,7 +28,12 @@ final class OrderSearchController
     ) {
     }
 
-    #[Route('/api/v1/orders/search', name: 'api_orders_search', methods: ['GET'])]
+    /**
+     * Search orders using a query string with support for pagination.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @return JsonResponse A JSON response containing search results (hits, total, limit, page).
+     */
     public function __invoke(Request $request): JsonResponse
     {
         $query = trim((string) $request->query->get('q', ''));
@@ -26,7 +41,7 @@ final class OrderSearchController
         $limit = min(100, max(1, (int) $request->query->get('limit', 20)));
 
         if ($query === '') {
-            return new JsonResponse(['error' => 'q is required'], 400);
+            throw new BadRequestHttpException('q is required');
         }
 
         $offset = ($page - 1) * $limit;
@@ -44,12 +59,12 @@ final class OrderSearchController
             ]);
 
             if ($response->getStatusCode() >= 400) {
-                return new JsonResponse(['error' => 'Manticore search request failed'], 502);
+                throw new HttpException(502, 'Manticore search request failed');
             }
 
             $payload = $response->toArray(false);
         } catch (TransportExceptionInterface) {
-            return new JsonResponse(['error' => 'Manticore service is unavailable'], 502);
+            throw new HttpException(502, 'Manticore service is unavailable');
         }
 
         return new JsonResponse([
@@ -61,3 +76,4 @@ final class OrderSearchController
         ]);
     }
 }
+
