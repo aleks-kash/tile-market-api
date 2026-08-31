@@ -4,30 +4,74 @@ namespace App\Controller;
 
 use App\Repository\OrderRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-final class OrderController
+/**
+ * Controller for managing order details.
+ * Handled via routes defined in config/routes.yaml.
+ */
+final readonly class OrderController
 {
-    public function __construct(private readonly OrderRepository $orderRepository)
+    /**
+     * OrderController constructor.
+     *
+     * @param OrderRepository $orderRepository The repository to query order data.
+     */
+    public function __construct(private OrderRepository $orderRepository)
     {
     }
 
-    #[Route('/api/v1/orders/{id<\\d+>}', name: 'api_order_show', methods: ['GET'])]
-    public function show(int $id): JsonResponse
+    /**
+     * Retrieve and return detailed information for a specific order by its hash.
+     *
+     * @param string $hash The unique hash identifier of the order.
+     * @return JsonResponse JSON representation of the order details, or a 404 error if not found.
+     */
+    public function run(string $hash): JsonResponse
     {
-        $order = $this->orderRepository->find($id);
+        // Get order by its hash.
+        $order = $this->orderRepository->findOneBy(['hash' => $hash]);
 
+        // If the order does not exist, return a 404 Not Found response.
         if ($order === null) {
-            return new JsonResponse(['error' => 'Order not found'], 404);
+            throw new NotFoundHttpException('Order not found');
+        }
+
+        // Format the order's associated articles.
+        $articles = [];
+        foreach ($order->getArticles() as $article) {
+            $articles[] = [
+                'id' => $article->getId(),
+                'article_id' => $article->getArticleId(),
+                'amount' => $article->getAmount(),
+                'price' => $article->getPrice(),
+                'currency' => $article->getCurrency(),
+                'measure' => $article->getMeasure(),
+            ];
         }
 
         return new JsonResponse([
-            'id' => $order->getId(),
-            'factory' => $order->getFactory(),
-            'collection' => $order->getCollection(),
-            'article' => $order->getArticle(),
-            'price' => (float) $order->getPrice(),
-            'created_at' => $order->getCreatedAt()->format(\DateTimeInterface::ATOM),
+            'name' => $order->getName(),
+            'email' => $order->getEmail(),
+            'client_name' => $order->getClientName(),
+            'client_surname' => $order->getClientSurname(),
+            'hash' => $order->getHash(),
+            'token' => $order->getToken(),
+            'status' => $order->getStatus(),
+            'pay_type' => $order->getPayType(),
+            'locale' => $order->getLocale(),
+            'currency' => $order->getCurrency(),
+            'measure' => $order->getMeasure(),
+            'created_at' => $order->getCreateDate()->format(\DateTimeInterface::ATOM),
+            'articles' => $articles,
+            'delivery' => [
+                'address' => $order->getDeliveryAddress(),
+                'building' => $order->getDeliveryBuilding(),
+                'city' => $order->getDeliveryCity(),
+                'index' => $order->getDeliveryIndex(),
+                'region' => $order->getDeliveryRegion(),
+                'country' => $order->getDeliveryCountry(),
+            ],
         ]);
     }
 }

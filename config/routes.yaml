@@ -1,3 +1,10 @@
+api_order_show:
+    path: /api/v1/orders/{hash}
+    controller: App\Controller\OrderController::run
+    methods: [GET]
+    requirements:
+        hash: '[a-zA-Z0-9_-]+'
+
 api_orders_stats:
   path: /api/v1/orders/stats
   controller: App\Controller\OrderStatsController::run
