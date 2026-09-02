@@ -9,7 +9,6 @@ use App\Dto\VatDataDto;
 use App\Soap\OrderSoapFacade;
 use Laminas\Soap\AutoDiscover;
 use Laminas\Soap\Wsdl\ComplexTypeStrategy\ArrayOfTypeSequence;
-use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,8 +16,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * Controller to handle SOAP requests for order creation and management.
+ * OpenAPI documentation handled by App\Swagger\SoapRouteDescriber.
  */
-#[OA\Tag(name: 'SOAP Web Service')]
 final class SoapController extends AbstractController
 {
     public function __construct(
@@ -32,55 +31,7 @@ final class SoapController extends AbstractController
      * @param Request $request The HTTP request containing SOAP XML.
      * @return Response A SOAP response containing the result or a SOAP Fault.
      */
-    #[OA\Get(
-        path: '/api/v1/soap/orders',
-        summary: 'Download SOAP WSDL XML Definition',
-        description: 'Returns the dynamically generated WSDL XML schema definition for SOAP order web service when requested with ?wsdl query param.',
-        parameters: [
-            new OA\Parameter(
-                name: 'wsdl',
-                in: 'query',
-                description: 'Query flag to request WSDL schema definition',
-                required: false,
-                schema: new OA\Schema(type: 'string', example: 'wsdl')
-            )
-        ],
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: 'WSDL XML document',
-                content: new OA\MediaType(
-                    mediaType: 'text/xml',
-                    schema: new OA\Schema(type: 'string', example: '<?xml version="1.0" encoding="UTF-8"?><definitions .../>')
-                )
-            )
-        ]
-    )]
-    #[OA\Post(
-        path: '/api/v1/soap/orders',
-        summary: 'Execute SOAP Order Action',
-        description: 'Processes SOAP XML requests for Order management operations (e.g. createOrder, updateOrder, addArticle).',
-        requestBody: new OA\RequestBody(
-            description: 'SOAP 1.1 XML Request envelope',
-            required: true,
-            content: new OA\MediaType(
-                mediaType: 'text/xml',
-                schema: new OA\Schema(type: 'string', example: '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"/>')
-            )
-        ),
-        responses: [
-            new OA\Response(
-                response: 200,
-                description: 'SOAP 1.1 XML Response envelope or SOAP Fault',
-                content: new OA\MediaType(
-                    mediaType: 'text/xml',
-                    schema: new OA\Schema(type: 'string', example: '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"/>')
-                )
-            )
-        ]
-    )]
     public function run(Request $request): Response
-
     {
         // Generate the absolute URL of the current endpoint (without ?wsdl).
         $endpointUrl = $this->generateUrl(

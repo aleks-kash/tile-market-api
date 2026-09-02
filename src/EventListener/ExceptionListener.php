@@ -92,11 +92,11 @@ final class ExceptionListener
     private function isSoapRequest(Request $request): bool
     {
         $contentType = (string) $request->headers->get('Content-Type');
-        $accept = (string) $request->headers->get('Accept');
+        $path = $request->getPathInfo();
 
-        return $request->headers->has('SOAPAction')
-            || str_contains($contentType, 'xml')
-            || str_contains($accept, 'xml');
+        return str_starts_with($path, '/api/v1/soap')
+            || $request->headers->has('SOAPAction')
+            || str_contains($contentType, 'xml');
     }
 
     /**
