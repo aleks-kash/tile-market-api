@@ -25,6 +25,26 @@ api_soap_orders:
   controller: App\Controller\SoapController::run
   methods: [GET, POST]
 
+app_swagger_ui:
+  path: /api/doc
+  controller: App\Controller\SwaggerController::ui
+  methods: [GET]
+
+app_swagger_ui_v1:
+  path: /api/v1/doc
+  controller: App\Controller\SwaggerController::ui
+  methods: [GET]
+
+app_swagger_json:
+  path: /api/doc.json
+  controller: App\Controller\SwaggerController::json
+  methods: [GET]
+
+app_swagger_json_v1:
+  path: /api/v1/doc.json
+  controller: App\Controller\SwaggerController::json
+  methods: [GET]
+
 controllers:
   resource:
     path: ../src/Controller/
