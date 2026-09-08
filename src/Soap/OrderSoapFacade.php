@@ -29,13 +29,13 @@ readonly class OrderSoapFacade
      *
      * @param \App\Dto\AddArticleRequestDto|\stdClass|array $data The data for adding an article to the order.
      *
-     * @return string Operation result message.
+     * @return array Operation result message.
      *
      * @throws ExceptionInterface If payload denormalization fails.
      * @throws SoapValidationException If DTO validation fails.
      * @throws \Exception If adding the article fails.
      */
-    public function addArticleToOrder(mixed $data): string
+    public function addArticleToOrder(mixed $data): array
     {
         if ($data instanceof AddArticleRequestDto) {
             $dto = $data;
@@ -64,9 +64,13 @@ readonly class OrderSoapFacade
             throw new SoapValidationException($a_error_list);
         }
 
-        $this->articleManager->addArticleToOrder($dto);
+        $orderArticle = $this->articleManager->addArticleToOrder($dto);
 
-        return "Article added";
+        return [
+            'orderId' => $orderArticle->getOrder()->getId(),
+            'orderArticleId' => $orderArticle->getId(),
+            'status' => 'Article added',
+        ];
     }
 
     /**
@@ -79,10 +83,10 @@ readonly class OrderSoapFacade
     public function createEmptyOrder(string $name = ''): array
     {
         try {
-            $id = $this->orderManager->createEmptyOrder($name);
+            $order = $this->orderManager->createEmptyOrder($name);
             return [
-                'id' => $id,
-                'status' => 'created',
+                'orderId' => $order->getId(),
+                'status' => 'Order created',
             ];
         } catch (\Exception $e) {
             throw new \SoapFault("Server", "Failed to create order");

@@ -29,9 +29,9 @@ readonly class OrderManager
      *
      * @param string|null $name Order name (default: 'Draft Order').
      *
-     * @return int ID of the created order (ID).
+     * @return Order Entity of the created order.
      */
-    public function createEmptyOrder(?string $name = null): int {
+    public function createEmptyOrder(?string $name = null): Order {
         $token = $this->userTokenProvider->getToken();
 
         // Defining the base name of the order.
@@ -51,7 +51,7 @@ readonly class OrderManager
         $this->em->persist($order);
         $this->em->flush();
 
-        return $order->getId();
+        return $order;
     }
 
     /**

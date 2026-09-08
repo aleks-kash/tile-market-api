@@ -29,9 +29,11 @@ readonly class ArticleManager
      *
      * @param AddArticleRequestDto $dto Data transfer object containing order and article details.
      *
+     * @return OrderArticle Entity of the created order article.
+     *
      * @throws \Exception If order with the specified ID is not found.
      */
-    public function addArticleToOrder(AddArticleRequestDto $dto): void
+    public function addArticleToOrder(AddArticleRequestDto $dto): OrderArticle
     {
         if ($dto->orderHash) {
             $order = $this->em->getRepository(Order::class)->findOneBy(['hash' => $dto->orderHash]);
@@ -70,5 +72,7 @@ readonly class ArticleManager
 
         $this->em->persist($article);
         $this->em->flush();
+
+        return $article;
     }
 }
