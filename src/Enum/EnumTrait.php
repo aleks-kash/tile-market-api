@@ -6,6 +6,10 @@ use App\Service\SidService;
 
 /**
  * Trait for Enum classes with numeric SID.
+ * 
+ * @property-read int $value Numeric ID (SID) of the enum case.
+ * @property-read string $name Name of the enum case.
+ * @method static static[] cases() Returns all cases defined on the enum.
  */
 trait EnumTrait
 {
@@ -92,6 +96,40 @@ trait EnumTrait
     }
 
     /**
+     * Returns a random enum element.
+     *
+     * @return static A random enum element.
+     */
+    public static function random(): static
+    {
+        $all = static::all();
+
+        return $all[array_rand($all)];
+    }
+
+    /**
+     * Returns a random numeric ID (SID) of an element from the enum.
+     *
+     * @return int A random ID element.
+     */
+    public static function randomId(): int
+    {
+        return static::random()->value;
+    }
+
+    /**
+     * Returns a random SID name of an element from the enum.
+     *
+     * @return string Sid name.
+     */
+    public static function randomSid(): string
+    {
+        $sid = strtoupper(static::random()->name);
+
+        return static::constantSid($sid);
+    }
+
+    /**
      * Checks if an element with the given numeric ID (SID) exists.
      *
      * @param int $id Numeric ID (SID) to check.
@@ -108,7 +146,7 @@ trait EnumTrait
      *
      * @param int $id Numeric ID (SID) to search for.
      *
-     * @return EnumTrait The element with the specified ID, or throws if the element is not found.
+     * @return static The element with the specified ID, or throws if the element is not found.
      * @throws \InvalidArgumentException if the element is not found.
      */
     public static function idSid(int $id): static
@@ -147,7 +185,7 @@ trait EnumTrait
      *
      * @param string $sid Letter code for search.
      *
-     * @return EnumTrait The element with the specified letter code, or throws an exception if the element is not found.
+     * @return static The element with the specified letter code, or throws an exception if the element is not found.
      * @throws \InvalidArgumentException if the element is not found.
      */
     public static function sidId(string $sid): static

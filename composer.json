@@ -29,6 +29,7 @@
     "twig/twig": "*"
   },
   "require-dev": {
+    "fakerphp/faker": "^1.24",
     "phpunit/phpunit": "^12.5",
     "symfony/browser-kit": "7.4.*",
     "symfony/css-selector": "7.4.*",

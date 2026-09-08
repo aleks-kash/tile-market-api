@@ -4,7 +4,15 @@ namespace App\Command;
 
 use App\Entity\Order;
 use App\Entity\OrderArticle;
+use App\Enum\CurrencySid;
+use App\Enum\LocaleSid;
+use App\Enum\MeasureSid;
+use App\Enum\PayTypeSid;
+use App\Enum\StatusSid;
+use App\Enum\StepSid;
+use App\Enum\VatTypeSid;
 use Doctrine\ORM\EntityManagerInterface;
+use Faker\Factory;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -14,8 +22,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Symfony console command for populating the database with sample orders and articles.
  *
- * Provides repeatable database seeding with predefined 32-character hexadecimal hashes
- * and includes duplicate protection to prevent re-inserting existing records.
+ * Provides repeatable database seeding with a predefined 32-character hexadecimal hash
+ * for the default first order and Faker-generated data for subsequent orders,
+ * including duplicate protection to prevent re-inserting existing records.
  */
 #[AsCommand(
     name: 'app:seed-orders',
@@ -23,47 +32,35 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 final class SeedOrdersCommand extends Command
 {
-    /** @var array<int, string> Predefined list of realistic 32-character hex MD5 hashes for seed orders */
-    private const PREDEFINED_HASHES = [
-        '0354343235c16cf2f9cb1558bd56d3d1',
-        'c81e728d9d4c2f636f067f89cc14862c',
-        'eccbc87e4b5ce2fe28308fd9f2a7baf3',
-        'a87ff679a2f3e71d9181a67b7542122c',
-        'e4da3b7fbbce2345d7772b0674a318d5',
-        '1679091c5a880faf6fb5e6087eb1b2dc',
-        '8f14e45fceea167a5a36dedd4bea2543',
-        'c9f0f895fb98ab9159f51fd0297e236d',
-        '45c48cce2e2d7fbcea1afc51c7c6ad26',
-        'd3d9446802a44259755d38e6d163e820',
-    ];
+    /**
+     * @var string Predefined 32-character hex hash for the default first seed order
+     */
+    public const string PREDEFINED_HASH = '0354343235c16cf2f9cb1558bd56d3d1';
 
-    /** @var array<int, string> Predefined list of sample client first names */
-    private const CLIENT_NAMES = [
-        'Alexander',
-        'Sergei',
-        'Elena',
-        'Dmitry',
-        'Olga',
-        'Maxim',
-        'Anna',
-        'Viktor',
-        'Maria',
-        'Pavel'
-    ];
+    /**
+     * @var string Predefined client first name for the default first seed order
+     */
+    public const string CLIENT_NAME = 'Alexander';
 
-    /** @var array<int, string> Predefined list of sample client last names */
-    private const CLIENT_SURNAMES = [
-        'Dubois',
-        'Petrov',
-        'Ivanova',
-        'Sidorov',
-        'Kuznetsova',
-        'Smirnov',
-        'Vasilieva',
-        'Popov',
-        'Sokolova',
-        'Morozov'
-    ];
+    /**
+     * @var string Predefined client last name for the default first seed order
+     */
+    public const string CLIENT_SURNAME = 'Dubois';
+
+    /**
+     * @var string Predefined client email for the default first seed order
+     */
+    public const string CLIENT_EMAIL = 'tile.expert@example.com';
+
+    /**
+     * @var string Predefined order description for testing
+     */
+    public const string ORDER_DESCRIPTION = 'Sample order description for testing';
+
+    /**
+     * @var int Total number of sample orders to generate
+     */
+    private const int TOTAL_ORDERS = 10;
 
     /**
      * @param EntityManagerInterface $em Doctrine entity manager for database operations.
@@ -87,19 +84,25 @@ final class SeedOrdersCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title('Seeding Database with Sample Orders and Articles');
 
+        $faker = Factory::create();
+        $faker->seed(12345);
+
         // Track seeding statistics.
-        $totalOrders = count(self::PREDEFINED_HASHES);
+        $totalOrders = self::TOTAL_ORDERS;
         $createdOrdersCount = 0;
         $skippedOrdersCount = 0;
         $totalArticlesCount = 0;
 
         $orderRepository = $this->em->getRepository(Order::class);
 
-        // Process each predefined seed order configuration.
+        // Process each seed order configuration.
         for ($i = 1; $i <= $totalOrders; $i++) {
-            $hash = self::PREDEFINED_HASHES[$i - 1];
+            $faker->seed(12345 + $i);
 
-            // 1. Duplicate check: verify if an order with this exact hash already exists in database.
+            // Resolve order hash (first order uses predefined hash, subsequent orders are generated).
+            $hash = $i === 1 ? self::PREDEFINED_HASH : $faker->md5();
+
+            // Duplicate check: verify if an order with this exact hash already exists in database.
             $existingOrder = $orderRepository->findOneBy(['hash' => $hash]);
 
             if ($existingOrder !== null) {
@@ -108,44 +111,50 @@ final class SeedOrdersCommand extends Command
                 continue;
             }
 
-            // 2. Resolve client contact parameters.
-            $clientName = self::CLIENT_NAMES[$i - 1];
-            $clientSurname = self::CLIENT_SURNAMES[$i - 1];
-            $predictableToken = md5('seeded_user_token_' . $i) . md5('token_ext_' . $i);
+            // Resolve client contact parameters.
+            // We apply default values to different orders for improved testing.
+            $clientName       = $i === 2 ? self::CLIENT_NAME       : $faker->firstName();
+            $clientSurname    = $i === 3 ? self::CLIENT_SURNAME    : $faker->lastName();
+            $email            = $i === 4 ? self::CLIENT_EMAIL      : $faker->safeEmail();
+            $description      = $i === 5 ? self::ORDER_DESCRIPTION : $faker->text();
+            $predictableToken = $faker->sha256();
+            $sid_currency = CurrencySid::randomSid();
+            $sid_measure = MeasureSid::randomSid();
 
-            // 3. Build new Order entity.
+            // Build new Order entity.
             $order = new Order();
             $order->setName(sprintf('Seeded Order #%d', $i))
                 ->setHash($hash)
                 ->setToken($predictableToken)
                 ->setClientName($clientName)
                 ->setClientSurname($clientSurname)
-                ->setEmail(sprintf('%s.%s@example.com', strtolower($clientName), strtolower($clientSurname)))
-                ->setStatus(($i % 5) + 1)
-                ->setPayType(($i % 3) + 1)
-                ->setVatType(1)
-                ->setLocale('en')
-                ->setCurrency('EUR')
-                ->setMeasure('m')
-                ->setStep(1);
+                ->setEmail($email)
+                ->setDescription($description)
+                ->setStatus(StatusSid::randomId())
+                ->setPayType(PayTypeSid::randomId())
+                ->setVatType(VatTypeSid::randomId())
+                ->setLocale(LocaleSid::randomSid())
+                ->setCurrency($sid_currency)
+                ->setMeasure($sid_measure)
+                ->setStep(StepSid::randomId());
 
-            // 4. Generate randomized order articles (1 to 10 items per order).
-            $articlesCount = rand(1, 10);
+            // 5. Generate randomized order articles (1 to 10 items per order).
+            $articlesCount = $faker->numberBetween(1, 10);
             $totalArticlesCount += $articlesCount;
 
             for ($j = 1; $j <= $articlesCount; $j++) {
                 $article = new OrderArticle();
                 $article->setArticleId(1000 + ($i * 10) + $j)
-                    ->setAmount((float) rand(5, 50))
-                    ->setPrice((float) (rand(1500, 9999) / 100))
-                    ->setCurrency('EUR')
-                    ->setMeasure('m');
+                    ->setAmount((float) $faker->numberBetween(5, 50))
+                    ->setPrice($faker->randomFloat(2, 15, 99))
+                    ->setCurrency($sid_currency)
+                    ->setMeasure($sid_measure);
 
                 $order->addArticle($article);
                 $this->em->persist($article);
             }
 
-            // 5. Persist order entity into Doctrine Unit of Work.
+            // 6. Persist order entity into Doctrine Unit of Work.
             $this->em->persist($order);
             $createdOrdersCount++;
 
@@ -159,7 +168,7 @@ final class SeedOrdersCommand extends Command
             ));
         }
 
-        // 6. Flush changes to database if new records were generated.
+        // 7. Flush changes to database if new records were generated.
         if ($createdOrdersCount > 0) {
             $this->em->flush();
             $io->success(sprintf(

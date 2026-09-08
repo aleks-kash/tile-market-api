@@ -54,6 +54,7 @@
 
 # IDE
 /.idea/
+/.vscode/
 
 ###> symfony/framework-bundle ###
 /.env.local
