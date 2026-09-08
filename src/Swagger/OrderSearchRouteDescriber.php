@@ -12,9 +12,14 @@ use Symfony\Component\Routing\Route;
 /**
  * Custom OpenAPI RouteDescriber for OrderSearchController endpoints.
  */
-final class OrderSearchRouteDescriber implements RouteDescriberInterface
+final class OrderSearchRouteDescriber extends AbstractRouteDescriber implements RouteDescriberInterface
 {
     use RouteDescriberTrait;
+
+    /**
+     * @inheritdoc
+     */
+    protected string $tagName = 'Search';
 
     public function describe(OA\OpenApi $api, Route $route, \ReflectionMethod $reflectionMethod): void
     {
@@ -22,9 +27,11 @@ final class OrderSearchRouteDescriber implements RouteDescriberInterface
             return;
         }
 
+        $this->addTagDescription($api, 'Manticore Search');
+
         $operations = $this->getOperations($api, $route);
         foreach ($operations as $operation) {
-            $operation->tags = ['Search'];
+            $operation->tags = [$this->tagName];
             $operation->summary = 'Full-text search for orders';
             $operation->description = 'Performs full-text search on indexed orders via Manticore Search.';
 

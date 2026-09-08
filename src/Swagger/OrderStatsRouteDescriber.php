@@ -12,9 +12,14 @@ use Symfony\Component\Routing\Route;
 /**
  * Custom OpenAPI RouteDescriber for OrderStatsController endpoints.
  */
-final class OrderStatsRouteDescriber implements RouteDescriberInterface
+final class OrderStatsRouteDescriber extends AbstractRouteDescriber implements RouteDescriberInterface
 {
     use RouteDescriberTrait;
+
+    /**
+     * @inheritdoc
+     */
+    protected string $tagName = 'Statistics';
 
     public function describe(OA\OpenApi $api, Route $route, \ReflectionMethod $reflectionMethod): void
     {
@@ -22,9 +27,11 @@ final class OrderStatsRouteDescriber implements RouteDescriberInterface
             return;
         }
 
+        $this->addTagDescription($api, 'Query with pagination (page, quantity per page) and grouping.');
+
         $operations = $this->getOperations($api, $route);
         foreach ($operations as $operation) {
-            $operation->tags = ['Statistics'];
+            $operation->tags = [$this->tagName];
             $operation->summary = 'Get aggregated order statistics';
             $operation->description = 'Returns aggregated order count and financial totals grouped by day, month, or year.';
 

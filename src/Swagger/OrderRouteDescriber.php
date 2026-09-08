@@ -2,6 +2,7 @@
 
 namespace App\Swagger;
 
+use App\Command\SeedOrdersCommand;
 use App\Controller\OrderController;
 use Nelmio\ApiDocBundle\RouteDescriber\RouteDescriberInterface;
 use Nelmio\ApiDocBundle\RouteDescriber\RouteDescriberTrait;
@@ -12,9 +13,14 @@ use Symfony\Component\Routing\Route;
 /**
  * Custom OpenAPI RouteDescriber for OrderController endpoints.
  */
-final class OrderRouteDescriber implements RouteDescriberInterface
+final class OrderRouteDescriber extends AbstractRouteDescriber implements RouteDescriberInterface
 {
     use RouteDescriberTrait;
+
+    /**
+     * @inheritdoc
+     */
+    protected string $tagName = 'Order';
 
     public function describe(OA\OpenApi $api, Route $route, \ReflectionMethod $reflectionMethod): void
     {
@@ -22,11 +28,14 @@ final class OrderRouteDescriber implements RouteDescriberInterface
             return;
         }
 
+        $this->addTagDescription($api, 'Get order details');
+
         $operations = $this->getOperations($api, $route);
         foreach ($operations as $operation) {
-            $operation->tags = ['Orders'];
+            $operation->tags = [$this->tagName];
             $operation->summary = 'Get order details by hash';
-            $operation->description = 'Retrieves full details of a specific order by its unique hash key.';
+            $operation->description = 'Retrieves full details of a specific order by its unique hash key.' .
+                '</br> Returns 404 if the order is not found.';
 
             $hashParam = new OA\Parameter([
                 'name' => 'hash',
@@ -37,7 +46,7 @@ final class OrderRouteDescriber implements RouteDescriberInterface
             ]);
             $hashParam->schema = new OA\Schema([
                 'type' => 'string',
-                'example' => '4a8c8872b2173f47e335b12a8ab692e1',
+                'example' => SeedOrdersCommand::PREDEFINED_HASH,
                 '_context' => new Context(['nested' => $hashParam]),
             ]);
 

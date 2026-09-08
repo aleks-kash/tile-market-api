@@ -12,9 +12,14 @@ use Symfony\Component\Routing\Route;
 /**
  * Custom OpenAPI RouteDescriber for PriceController endpoints.
  */
-final class PriceRouteDescriber implements RouteDescriberInterface
+final class PriceRouteDescriber extends AbstractRouteDescriber implements RouteDescriberInterface
 {
     use RouteDescriberTrait;
+
+    /**
+     * @inheritdoc
+     */
+    protected string $tagName = 'Price Extractor';
 
     public function describe(OA\OpenApi $api, Route $route, \ReflectionMethod $reflectionMethod): void
     {
@@ -22,9 +27,11 @@ final class PriceRouteDescriber implements RouteDescriberInterface
             return;
         }
 
+        $this->addTagDescription($api, 'Parses the site to get the price.');
+
         $operations = $this->getOperations($api, $route);
         foreach ($operations as $operation) {
-            $operation->tags = ['Price Extractor'];
+            $operation->tags = [$this->tagName];
             $operation->summary = 'Extract article price from tile catalog';
             $operation->description = 'Scrapes and extracts the price of a specified tile article from remote catalog.';
 
@@ -63,7 +70,7 @@ final class PriceRouteDescriber implements RouteDescriberInterface
             ]);
             $articleParam->schema = new OA\Schema([
                 'type' => 'string',
-                'example' => 'g963',
+                'example' => 'k263-arteseta-camoscio-s000628660',
                 '_context' => new Context(['nested' => $articleParam]),
             ]);
 
