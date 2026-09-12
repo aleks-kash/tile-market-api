@@ -1,30 +1,37 @@
-.PHONY: install build up down test migrate seed index
+DC = docker compose
+APP = $(DC) exec php-fpm
+MANTICORE = $(DC) exec manticore
 
-install:
-	docker compose build
-	docker compose up -d
-	docker compose exec php-fpm composer install
-	docker compose exec php-fpm bin/console doctrine:migrations:migrate --no-interaction
-	docker compose exec php-fpm bin/console app:seed-orders
-	docker compose exec manticore indexer --all
+.PHONY: install build up down test composer migrate seed index
+
+install: up composer migrate seed index
+	@echo "---------------------------------------------------------------"
+	@echo "Installation completed successfully!"
+	@echo "API Web Server:      http://localhost:8080"
+	@echo "Swagger UI Docs:     http://localhost:8080/api/v1/doc"
+	@echo "OpenAPI JSON Spec:   http://localhost:8080/api/v1/doc.json"
+	@echo "---------------------------------------------------------------"
 
 build:
-	docker compose build
+	$(DC) build
 
 up:
-	docker compose up -d
+	$(DC) up -d --build
 
 down:
-	docker compose down
+	$(DC) down
 
 test:
-	docker compose run --rm php-fpm vendor/bin/simple-phpunit
+	$(APP) php vendor/bin/simple-phpunit
+
+composer:
+	$(APP) composer install
 
 migrate:
-	docker compose exec php-fpm bin/console doctrine:migrations:migrate --no-interaction
+	$(APP) php bin/console doctrine:migrations:migrate --no-interaction
 
 seed:
-	docker compose exec php-fpm bin/console app:seed-orders
+	$(APP) php bin/console app:seed-orders
 
 index:
-	docker compose exec manticore indexer --all
+	$(MANTICORE) indexer --all
