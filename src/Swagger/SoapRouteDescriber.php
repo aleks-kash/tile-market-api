@@ -68,7 +68,7 @@ final class SoapRouteDescriber extends AbstractRouteDescriber implements RouteDe
         // Request to get WSDL.
         $this->prepareWSDLRequest($path);
 
-        // POST operation for SOAP web service.
+        // POST operation for SOAP service.
         $operation = Util::getOperation($path, 'post');
         $operation->summary = 'Execute SOAP Order Actions';
         $operation->description = 'Processes SOAP XML requests for Order management (createOrder, updateOrder, addArticleToOrder).';
@@ -141,9 +141,9 @@ final class SoapRouteDescriber extends AbstractRouteDescriber implements RouteDe
             [
                 'action' => 'addArticleToOrder',
                 'summary' => 'Add article item to NEW order',
-                'description' => 'If orderHash is not passed, the following actions will occur:' .
-                    "an attempt is made to find an order by the user's token and return their order;" .
-                    "otherwise, a new order will be created;" .
+                'description' => 'If orderHash is not passed, the following actions will occur: ' .
+                    "an attempt is made to find an order by the user's token and return their order; " .
+                    "otherwise, a new order will be created; " .
                     "if several orders were found for a given user, we will take the first one;",
                 'body' => [
                     'data' => [
