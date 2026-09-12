@@ -34,4 +34,4 @@ seed:
 	$(APP) php bin/console app:seed-orders
 
 index:
-	$(MANTICORE) indexer --all
+	$(MANTICORE) indexer --all --rotate

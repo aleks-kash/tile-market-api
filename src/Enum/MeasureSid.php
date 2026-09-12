@@ -59,6 +59,15 @@ enum MeasureSid: int
      */
     public static function constantSid(string $name): string
     {
-        return strtolower($name);
+        return match ($name) {
+            'M' => 'm',
+            'M2' => 'mq',
+            'M3' => 'm3',
+            'KG' => 'kg',
+            'PCS' => 'pz',
+            'PACK' => 'pk',
+            'PALLET' => 'pl',
+            default => strtolower(substr($name, 0, 2)),
+        };
     }
 }
